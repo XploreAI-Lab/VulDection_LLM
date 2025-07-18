@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漏洞检测中心 - 二进制分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #f8f9fa;
+            --accent-color: #0d6efd;
+            --text-color: #212529;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .sidebar {
+            background-color: #ffffff;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .scanning-active {
+            animation: pulse-glow 2s infinite;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .drag-drop-zone {
+            transition: all 0.3s ease;
+            border: 2px dashed var(--accent-color);
+            cursor: pointer;
+        }
+
+        .nav-link {
+            color: #495057;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .drag-drop-zone:hover {
+            transform: scale(1.02);
+            background: rgba(100, 255, 218, 0.05);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #e9ecef;
+            color: var(--accent-color);
+        }
+
+        .vulnerability-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+
+        .vulnerability-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        }
+
+        .severity-critical {
+            color: #dc3545;
+            animation: blink 1.5s infinite;
+        }
+
+        .card-header {
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+            color: var(--accent-color);
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .chart-container {
+            perspective: 1000px;
+        }
+
+        .btn-primary:hover {
+            background-color: rgba(100, 255, 218, 0.1);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .chart-card {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .table {
+            color: var(--text-color);
+        }
+
+        .cve-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+
+        .table th {
+            border-color: rgba(100, 255, 218, 0.2);
+        }
+
+        .table td {
+            border-color: rgba(100, 255, 218, 0.1);
+        }
+
+        .dark-mode {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .dark-mode .card {
+            background-color: #2d2d2d;
+            border-color: #404040;
+        }
+
+        .progress {
+            background-color: var(--secondary-color);
+        }
+
+        .progress-bar {
+            background-color: var(--accent-color);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .file-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .file-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-progress {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 8px;
+        }
+
+        .upload-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pulsing-badge {
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        /* 新增的弹出框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 60%;
+            max-width: 700px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.4s;
+        }
+
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-50px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        .close-button {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            color: #333;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .repair-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .repair-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .repair-header {
+            background: linear-gradient(135deg, #00aaff, #00d1ff);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .repair-body {
+            padding: 15px;
+            background: white;
+        }
+
+        .risk-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .risk-high {
+            background-color: #f8d7da;
+            color: #dc3545;
+        }
+
+        .risk-medium {
+            background-color: #fff3cd;
+            color: #ffc107;
+        }
+
+        .risk-low {
+            background-color: #d4edda;
+            color: #28a745;
+        }
+
+        .cve-list {
+            display: none; /* Initially hide the CVE list */
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar p-3">
+        <h4 class="text-center mb-4"><i class="fas fa-shield-alt"></i> 漏洞检测中心</h4>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-arrow-left"></i> 返回主站
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="vulnerable-detection.html">
+                    <i class="fas fa-bug"></i> 漏洞扫描
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#cve-db">
+                    <i class="fas fa-database"></i> CVE数据库
+                </a>
+            </li>
+        </ul>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="darkModeToggle">
+            <label class="form-check-label" for="darkModeToggle">暗黑模式</label>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <h5><i class="fas fa-radar"></i> 深度漏洞扫描</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="analysis-progress">
+                                <h6>扫描进度</h6>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped"
+                                         role="progressbar"
+                                         style="width: 0%"
+                                         id="scanProgressBar">0%</div>
+                                </div>
+                                <div class="mt-2" id="currentScanning">
+                                    当前阶段: 等待上传文件
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="scan-type-selector d-flex gap-2">
+                                        <button class="btn btn-outline-danger active" data-scan-type="full">
+                                            <i class="fas fa-crosshairs"></i> 深度扫描
+                                        </button>
+                                        <button class="btn btn-outline-warning" data-scan-type="quick">
+                                            <i class="fas fa-bolt"></i> 快速扫描
+                                        </button>
+                                        <button class="btn btn-outline-info" data-scan-type="custom">
+                                            <i class="fas fa-cogs"></i> 自定义扫描
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="file-upload-area mt-4">
+                                <h6>上传待扫描文件</h6>
+                                <div class="drag-drop-zone p-4 text-center border rounded">
+                                    <i class="fas fa-file-upload fa-3x mb-3"></i>
+                                    <p>拖放文件至此或点击选择文件</p>
+                                    <input type="file" class="form-control" id="vulnerabilityFile" hidden>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card chart-card">
+                        <div class="card-body">
+                            <canvas id="realTimeChart"></canvas>
+                            <div class="live-indicator mt-3">
+                                <span class="badge bg-danger pulsing-badge">
+                                    <i class="fas fa-circle"></i> 实时更新中
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4" id="cve-db">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white d-flex justify-content-between">
+                            <h5><i class="fas fa-database"></i> CVE数据库</h5>
+                            <div class="cve-search">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="搜索CVE...">
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="cve-filter mb-3">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-danger active">全部</button>
+                                    <button class="btn btn-sm btn-outline-danger">高危</button>
+                                    <button class="btn btn-sm btn-outline-warning">中危</button>
+                                    <button class="btn btn-sm btn-outline-info">低危</button>
+                                </div>
+                            </div>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>漏洞ID</th>
+                                        <th>危险等级</th>
+                                        <th>漏洞类型</th>
+                                        <th>内存地址</th>
+                                        <th>修复建议</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-danger">
+                                        <td>CVE-2024-0001</td>
+                                        <td><i class="fas fa-skull"></i> 严重</td>
+                                        <td>堆溢出</td>
+                                        <td>0x004015A0</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0001">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-danger">
+                                        <td>CVE-2024-0002</td>
+                                        <td><i class="fas fa-exclamation-triangle"></i> 高危</td>
+                                        <td>格式字符串漏洞</td>
+                                        <td>0x00401B2C</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0002">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-warning">
+                                        <td>CVE-2024-0003</td>
+                                        <td><i class="fas fa-radiation"></i> 中危</td>
+                                        <td>整数溢出</td>
+                                        <td>0x00402E88</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0003">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td>CVE-2024-0004</td>
+                                        <td><i class="fas fa-info-circle"></i> 低危</td>
+                                        <td>竞争条件漏洞</td>
+                                        <td>0x004031F0</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0004">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-danger">
+                                        <td>CVE-2024-0005</td>
+                                        <td><i class="fas fa-exclamation-triangle"></i> 高危</td>
+                                        <td>缓冲区溢出</td>
+                                        <td>0x00404B2C</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0005">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-warning">
+                                        <td>CVE-2024-0006</td>
+                                        <td><i class="fas fa-radiation"></i> 中危</td>
+                                        <td>SQL注入</td>
+                                        <td>0x00405E88</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0006">查看修复方案</button></td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td>CVE-2024-0007</td>
+                                        <td><i class="fas fa-info-circle"></i> 低危</td>
+                                        <td>跨站脚本攻击</td>
+                                        <td>0x004061F0</td>
+                                        <td><button class="btn btn-sm btn-primary repair-btn" data-cve="2024-0007">查看修复方案</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="cve-list">
+                                <div class="cve-item">
+                                    <div class="cve-header" data-bs-toggle="collapse" href="#cveDetail2">
+                                        <span class="badge bg-danger">CVE-2024-0002</span>
+                                        <h6 class="d-inline">格式化字符串漏洞</h6>
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </div>
+                                    <div class="cve-detail collapse" id="cveDetail2">
+                                        <div class="mt-3 p-3 bg-dark text-white rounded">
+                                            <p><strong>影响范围：</strong>版本2.1-2.5</p>
+                                            <p><strong>修复方案：</strong>启用格式字符串保护编译选项</p>
+                                            <div class="exploit-rating">
+                                                <i class="fas fa-exclamation-triangle"></i> 利用难度: 中
+                                                <i class="fas fa-fire ms-3"></i> 危害等级: 高危
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cve-item mt-2">
+                                    <div class="cve-header" data-bs-toggle="collapse" href="#cveDetail3">
+                                        <span class="badge bg-warning">CVE-2024-0003</span>
+                                        <h6 class="d-inline">整数符号错误漏洞</h6>
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </div>
+                                    <div class="cve-detail collapse" id="cveDetail3">
+                                        <div class="mt-3 p-3 bg-dark text-white rounded">
+                                            <p><strong>影响范围：</strong>版本3.0-beta</p>
+                                            <p><strong>修复方案：</strong>添加边界检查并更新到3.1版本</p>
+                                            <div class="exploit-rating">
+                                                <i class="fas fa-radiation"></i> 利用难度: 中
+                                                <i class="fas fa-shield-alt ms-3"></i> 危害等级: 中危
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cve-item mt-2">
+                                    <div class="cve-header" data-bs-toggle="collapse" href="#cveDetail4">
+                                        <span class="badge bg-info">CVE-2024-0004</span>
+                                        <h6 class="d-inline">TOCTOU竞争条件漏洞</h6>
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </div>
+                                    <div class="cve-detail collapse" id="cveDetail4">
+                                        <div class="mt-3 p-3 bg-dark text-white rounded">
+                                            <p><strong>影响范围：</strong>所有多线程版本</p>
+                                            <p><strong>修复方案：</strong>使用原子操作替代文件状态检查</p>
+                                            <div class="exploit-rating">
+                                                <i class="fas fa-info-circle"></i> 利用难度: 高
+                                                <i class="fas fa-bug ms-3"></i> 危害等级: 低危
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修复建议弹出框 -->
+    <div id="repairModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修复建议</h5>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="modal-body" id="repairContent">
+                <!-- 修复内容将在这里动态加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="closeModal">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // 全局变量
+        let realTimeChart;
+        let cveListShown = false;
+
+        // 漏洞修复建议数据
+        const repairData = {
+            '2024-0001': {
+                title: 'CVE-2024-0001: 堆溢出漏洞',
+                risk: '严重',
+                riskClass: 'risk-high',
+                description: '该漏洞可能允许攻击者执行任意代码或导致应用崩溃。漏洞源于堆内存分配和释放过程中的边界检查缺失。',
+                solution: '1. 为所有堆分配操作添加严格边界检查，确保写入操作不会超出分配的缓冲区。<br>2. 使用现代内存安全语言或工具（如Rust或Valgrind）重构关键模块。<br>3. 应用ASLR（地址空间布局随机化）和DEP（数据执行保护）等操作系统安全特性。',
+                references: ['[OWASP Memory Safety](https://owasp.org/www-project-memory-safety)', '[CWE-122: Heap-based Buffer Overflow](https://cwe.mitre.org/data/definitions/122.html)']
+            },
+            '2024-0002': {
+                title: 'CVE-2024-0002: 格式字符串漏洞',
+                risk: '高危',
+                riskClass: 'risk-high',
+                description: '格式字符串漏洞允许攻击者通过精心构造的输入读取或写入任意内存位置，可能导致信息泄露或代码执行。',
+                solution: '1. 避免将用户可控数据直接作为格式字符串参数传递给printf系列函数。<br>2. 对所有格式化输出函数使用明确的格式字符串，避免使用%s等通配符。<br>3. 使用编译器提供的格式字符串检查选项（如-fno-common或-fstack-protector）。',
+                references: ['[CWE-134: Use of Externally Controlled Format String](https://cwe.mitre.org/data/definitions/134.html)', '[Barracuda Labs Format String Vulnerability](https://www.barracuda.com/security-labs/format-string-vulnerability)']
+            },
+            '2024-0003': {
+                title: 'CVE-2024-0003: 整数溢出漏洞',
+                risk: '中危',
+                riskClass: 'risk-medium',
+                description: '整数溢出可能导致缓冲区分配不足或逻辑错误，最终引发内存越界访问或其他安全问题。',
+                solution: '1. 使用带符号检查的整数运算函数，并在所有可能的溢出点添加显式检查。<br>2. 转换为使用安全的整数类型（如C++20中的std::safe_int）或集成整数溢出检测工具。<br>3. 对关键计算逻辑实施防御性编程，假设所有外部输入都可能引起溢出。',
+                references: ['[CWE-190: Integer Overflow or Wraparound](https://cwe.mitre.org/data/definitions/190.html)', '[Google Integer Overflow Sanitizer](https://github.com/google/sanitizers/wiki/IntegerOverflowSanitizer)']
+            },
+            '2024-0004': {
+                title: 'CVE-2024-0004: 竞争条件漏洞',
+                risk: '低危',
+                riskClass: 'risk-low',
+                description: '在多线程或并发执行环境中，由于缺乏适当的同步机制，可能导致不可预测的行为或数据损坏。',
+                solution: '1. 使用细粒度的锁机制保护共享资源访问，避免过度锁定降低性能。<br>2. 考虑使用不可变数据结构或原子操作消除竞争条件。<br>3. 应用条件变量和信号量等高级同步原语简化并发控制逻辑。',
+                references: ['[CWE-362: Race Condition](https://cwe.mitre.org/data/definitions/362.html)', '[10 Ways to Avoid Race Conditions in Concurrent Code](https://www.infoworld.com/article/3638563/10-ways-to-avoid-race-conditions-in-concurrent-code.html)']
+            },
+            '2024-0005': {
+                title: 'CVE-2024-0005: 缓冲区溢出漏洞',
+                risk: '高危',
+                riskClass: 'risk-high',
+                description: '该漏洞允许攻击者覆盖相邻内存区域，篡改程序控制流或执行任意代码。',
+                solution: '1. 替换不安全的字符串操作函数（如strcpy、strcat）为安全版本（strncpy、snprintf）。<br>2. 实现输入长度验证机制，确保所有写入操作都在缓冲区边界内。<br>3. 使用内存安全编译器选项（如/GS for MSVC或-fstack-protector for GCC）。',
+                references: ['[CWE-119: Improper Restriction of Operations within the Bounds of a Memory Buffer](https://cwe.mitre.org/data/definitions/119.html)', '[Smashing the Stack for Fun and Profit](https://wwwPhrack.org/past-issues/49/P49-14.html)']
+            },
+            '2024-0006': {
+                title: 'CVE-2024-0006: SQL注入漏洞',
+                risk: '中危',
+                riskClass: 'risk-medium',
+                description: '该漏洞允许攻击者通过构造恶意SQL语句操纵数据库，可能导致数据泄露或篡改。',
+                solution: '1. 使用参数化查询完全替代字符串拼接方式构造SQL语句。<br>2. 实施最小权限原则，为应用程序分配仅必要的数据库权限。<br>3. 应用Web应用防火墙（WAF）检测和拦截潜在的SQL注入攻击。',
+                references: ['[CWE-89: Improper Neutralization of Special Elements used in an SQL Command](https://cwe.mitre.org/data/definitions/89.html)', '[SQL Injection Cheat Sheet](https://portswigger.net/web-security/sql-injection/cheat-sheet)']
+            },
+            '2024-0007': {
+                title: 'CVE-2024-0007: 跨站脚本攻击漏洞',
+                risk: '低危',
+                riskClass: 'risk-low',
+                description: '该漏洞允许攻击者注入恶意脚本，劫持用户会话或执行其他客户端操作。',
+                solution: '1. 对所有用户输入进行HTML实体编码，避免特殊字符被解释为脚本。<br>2. 设置HTTP响应头Content-Security-Policy限制可执行的脚本来源。<br>3. 使用框架内置的XSS防护机制（如React的JSX自动转义）。',
+                references: ['[CWE-79: Improper Neutralization of Input During Web Page Generation](https://cwe.mitre.org/data/definitions/79.html)', '[XSS Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)']
+            }
+        };
+
+        // 初始化图表
+        function initChart() {
+            const ctx = document.getElementById('realTimeChart').getContext('2d');
+            realTimeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['高危漏洞', '中等风险', '低风险', '安全代码'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(23, 162, 184, 0.8)',
+                            'rgba(40, 167, 69, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.label}: ${context.raw}处`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 重置进度条
+        function resetProgressBar() {
+            const progressBar = document.getElementById('scanProgressBar');
+            const statusDisplay = document.getElementById('currentScanning');
+
+            progressBar.style.width = "0%";
+            progressBar.textContent = "0%";
+            statusDisplay.textContent = "当前阶段: 等待上传文件";
+        }
+
+        // 显示扫描完成状态
+        function showScanComplete() {
+            const dropZone = document.querySelector('.drag-drop-zone');
+            const totalVulns = realTimeChart.data.datasets[0].data
+                .slice(0, 3)
+                .reduce((a, b) => a + b, 0);
+
+            dropZone.innerHTML = `
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <p>扫描完成！共发现 ${totalVulns} 处漏洞</p>
+                <button class="btn btn-sm btn-primary" onclick="location.reload()">新的扫描</button>
+            `;
+        }
+
+        // 处理文件上传
+        async function handleFiles(files) {
+            const dropZone = document.querySelector('.drag-drop-zone');
+
+            // 显示上传状态
+            dropZone.innerHTML = `
+                <div class="upload-progress">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p>上传中 ${files[0].name}...</p>
+                </div>
+            `;
+
+            try {
+                // 模拟上传过程
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // 模拟上传成功
+                const scanId = "scan_" + Date.now();
+
+                // 启动进度轮询
+                pollScanProgress(scanId);
+            } catch (error) {
+                // 错误处理
+                dropZone.innerHTML = `
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <p>${error.message}</p>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="location.reload()">重试</button>
+                `;
+                resetProgressBar();
+            }
+        }
+
+        // 轮询扫描进度
+        function pollScanProgress(scanId) {
+            const progressBar = document.getElementById('scanProgressBar');
+            const statusDisplay = document.getElementById('currentScanning');
+            let progress = 0;
+            const stages = [
+                "文件预处理",
+                "反汇编分析",
+                "模式匹配",
+                "动态符号执行",
+                "漏洞验证",
+                "生成报告"
+            ];
+            let currentStage = 0;
+
+            // 重置进度条
+            progressBar.style.width = "0%";
+            progressBar.textContent = "0%";
+
+            // 模拟进度更新
+            const interval = setInterval(() => {
+                // 每2秒增加10%进度
+                progress += 10;
+
+                // 每30%更新一个阶段
+                if (progress > (currentStage + 1) * 30 && currentStage < stages.length - 1) {
+                    currentStage++;
+                }
+
+                // 更新UI
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}%`;
+                statusDisplay.textContent = `当前阶段: ${stages[currentStage]}`;
+
+                // 更新图表数据
+                if (progress === 30) {
+                    realTimeChart.data.datasets[0].data = [3, 5, 8, 42];
+                    realTimeChart.update();
+                } else if (progress === 60) {
+                    realTimeChart.data.datasets[0].data = [7, 12, 15, 36];
+                    realTimeChart.update();
+                } else if (progress === 90) {
+                    realTimeChart.data.datasets[0].data = [9, 14, 18, 29];
+                    realTimeChart.update();
+                }
+
+                // 扫描完成
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    progressBar.style.width = "100%";
+                    progressBar.textContent = "100%";
+                    statusDisplay.textContent = "扫描完成！";
+
+                    // 最终图表数据
+                    setTimeout(() => {
+                        realTimeChart.data.datasets[0].data = [12, 16, 22, 50];
+                        realTimeChart.update();
+                        showScanComplete();
+
+                        // 显示CVE列表
+                        document.querySelector('.cve-list').style.display = 'block';
+                        cveListShown = true;
+                    }, 500);
+                }
+            }, 500);
+        }
+
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化图表
+            initChart();
+
+            // 暗黑模式切换
+            document.getElementById('darkModeToggle').addEventListener('change', function() {
+                document.body.classList.toggle('dark-mode');
+            });
+
+            // 文件拖放区域点击事件
+            document.querySelector('.drag-drop-zone').addEventListener('click', () => {
+                document.getElementById('vulnerabilityFile').click();
+            });
+
+            // 文件选择变更事件
+            document.getElementById('vulnerabilityFile').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files);
+                }
+            });
+
+            // 拖放事件处理
+            const dropZone = document.querySelector('.drag-drop-zone');
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = '#e9ecef';
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.backgroundColor = 'transparent';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = 'transparent';
+                if (e.dataTransfer.files.length > 0) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+
+            // 扫描类型选择
+            document.querySelectorAll('[data-scan-type]').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    document.querySelectorAll('[data-scan-type]').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    // 为当前按钮添加active类
+                    this.classList.add('active');
+
+                    // 显示选择的扫描类型
+                    const scanType = this.getAttribute('data-scan-type');
+                    const statusDisplay = document.getElementById('currentScanning');
+                    statusDisplay.textContent = `已选择: ${scanType === 'full' ? '深度扫描' : scanType === 'quick' ? '快速扫描' : '自定义扫描'}`;
+                });
+            });
+
+            // 漏洞详情展开/折叠
+            document.querySelectorAll('.cve-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const icon = this.querySelector('.fa-chevron-down');
+                    icon.classList.toggle('fa-rotate-180');
+                });
+            });
+
+            // 修复建议按钮点击事件
+            document.querySelectorAll('.repair-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const cveId = this.getAttribute('data-cve');
+                    const repairInfo = repairData[cveId];
+
+                    if (repairInfo) {
+                        const modal = document.getElementById('repairModal');
+                        const content = document.getElementById('repairContent');
+
+                        content.innerHTML = `
+                            <div class="repair-card">
+                                <div class="repair-header">${repairInfo.title}</div>
+                                <div class="repair-body">
+                                    <div>
+                                        <span class="risk-indicator ${repairInfo.riskClass}">${repairInfo.risk}</span>
+                                    </div>
+                                    <p><strong>漏洞描述：</strong>${repairInfo.description}</p>
+                                    <p><strong>修复建议：</strong><br>${repairInfo.solution}</p>
+                                    <p><strong>参考资料：</strong><br>${repairInfo.references.map(ref => `<a href="${ref}" target="_blank">${ref}</a>`).join('<br>')}</p>
+                                </div>
+                            </div>
+                        `;
+
+                        modal.style.display = 'block';
+                    }
+                });
+            });
+
+            // 关闭模态框
+            document.querySelector('.close-button').addEventListener('click', function() {
+                document.getElementById('repairModal').style.display = 'none';
+            });
+
+            document.getElementById('closeModal').addEventListener('click', function() {
+                document.getElementById('repairModal').style.display = 'none';
+            });
+
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('repairModal')) {
+                    document.getElementById('repairModal').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
