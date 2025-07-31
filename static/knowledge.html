@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二进制代码分析平台 - 漏洞专家问答</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- 空favicon避免404错误 -->
+    <style>
+        :root {
+            --primary-color: #00aaff;
+            --secondary-color: #ffffff;
+            --accent-color: #00d1ff;
+            --text-color: #212529;
+        }
+
+        body {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* 统一侧边栏样式 */
+        .sidebar {
+            background-color: var(--secondary-color);
+            height: 100vh;
+            position: fixed;
+            width: 240px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .nav-link {
+            color: var(--text-color);
+            margin: 8px 0;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(0,209,255,0.1);
+            color: var(--primary-color);
+        }
+
+        .nav-link i { 
+            margin-right: 8px; 
+            color: var(--primary-color); 
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 40px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(0,170,255,0.3), rgba(0,209,255,0.1));
+            padding: 60px 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 900px;
+            margin: auto;
+            line-height: 1.8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+        }
+
+        .cta-button {
+            background-color: var(--accent-color);
+            color: #fff;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .section {
+            padding: 40px 0;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .section p {
+            max-width: 960px;
+            margin: auto;
+            line-height: 1.8;
+        }
+
+        /* 知识库问答特定样式 */
+        .card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        }
+
+        .card-header {
+            border-bottom: 1px solid #dee2e6;
+            color: #0d6efd;
+            background-color: rgba(13,110,253,0.05);
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0b5ed7;
+        }
+
+        .table {
+            color: #212529;
+        }
+
+        .table th {
+            border-color: rgba(100, 255, 218, 0.2);
+        }
+
+        .table td {
+            border-color: rgba(100, 255, 218, 0.1);
+        }
+
+        .progress {
+            background-color: #f8f9fa;
+        }
+
+        .progress-bar {
+            background-color: #0d6efd;
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .file-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .file-list-item:last-child {
+            border-bottom: none;
+        }
+
+        #chatContainer {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .status-container {
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .message-container {
+            max-width: 80%;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+        
+        .user-message {
+            background-color: #e6f7ff;
+            margin-left: auto;
+            border: 1px solid #b3e0ff;
+        }
+        
+        .ai-message {
+            background-color: #f0f8ff;
+            margin-right: auto;
+            border: 1px solid #cce5ff;
+        }
+        
+        .error-message {
+            background-color: #fff0f0;
+            margin-right: auto;
+            border: 1px solid #ffcccc;
+        }
+        
+        .message-label {
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+        
+        .message-content {
+            line-height: 1.5;
+        }
+
+        /* 动画效果 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 平台特色卡片 */
+        .feature-card {
+            transition: all 0.3s ease;
+            border: none;
+            background: linear-gradient(135deg,
+                rgba(33, 150, 243, 0.1) 0%,
+                rgba(233, 240, 250, 0.3) 100%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(33, 150, 243, 0.1);
+        }
+
+        /* 动态数据展示 */
+        .stats-card {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(45deg, #0d6efd, #0b5ed7);
+            color: white;
+            border-radius: 12px;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255,255,255,0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+
+        /* 上传按钮动效 */
+        .upload-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid #0d6efd;
+        }
+
+        .upload-btn:hover {
+            background: rgba(13, 110, 253, 0.1);
+        }
+
+        .upload-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .upload-btn:hover i {
+            transform: scale(1.2);
+        }
+
+        /* 时间轴动画 */
+        .analysis-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .analysis-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background: #0d6efd;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateX(20px);
+            animation: slideIn 0.5s forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            background: #0d6efd;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(13,110,253,0.2);
+        }
+
+        .drag-drop-zone {
+            transition: all 0.3s ease;
+            border: 2px dashed #0d6efd;
+            cursor: pointer;
+        }
+
+        .drag-drop-zone:hover {
+            background: rgba(13, 110, 253, 0.05);
+            transform: scale(1.01);
+        }
+
+        .hover-effect:hover {
+            transform: translateY(-3px);
+            transition: all 0.3s ease;
+        }
+
+        .icon-wrapper {
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- 统一后的侧边栏 -->
+    <div class="sidebar py-4">
+        <h4 class="text-center mb-4" style="color: var(--primary-color);"><i class="fas fa-shield-alt"></i> 二进制分析平台</h4>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-home"></i> 首页
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="analysis-results.html">
+                    <i class="fas fa-code-compare"></i> 抄袭检测
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="vulnerable-detection.html">
+                    <i class="fas fa-bug"></i> 漏洞检测
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="knowledge.html">
+                    <i class="fas fa-brain"></i> 漏洞专家问答
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="settings.html">
+                    <i class="fas fa-cog"></i> 系统设置
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="about.html">
+                    <i class="fas fa-info-circle"></i> 关于
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="tab-content">
+            <!-- Knowledge Base Tab -->
+            <div class="tab-pane fade show active" id="knowledge">
+                <h2><i class="fas fa-brain"></i> 漏洞专家问答</h2>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-cog"></i> 知识库配置</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- 状态指示器容器 -->
+                                <div id="statusContainer" class="status-container">
+                                    <div id="ragStatus" class="alert alert-info">
+                                        <i class="fas fa-circle-notch fa-spin"></i> 正在检查服务状态...
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="kbPath" class="form-label">知识库目录</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="kbPath" placeholder="选择知识库目录">
+                                        <button class="btn btn-primary" type="button" id="browseKbPathBtn">
+                                            <i class="fas fa-folder-open"></i> 浏览
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="apiKey" class="form-label">API密钥</label>
+                                    <input type="password" class="form-control" id="apiKey" placeholder="输入DeepSeek API密钥">
+                                </div>
+                                <div class="d-grid">
+                                    <button id="startRagBtn" class="btn btn-primary">
+                                        <i class="fas fa-play"></i> 启动RAG服务
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-comments"></i> 问答界面</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="chatContainer">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-comments fa-3x mb-3"></i>
+                                        <p>RAG服务启动后，您可以在这里与知识库交互</p>
+                                    </div>
+                                </div>
+                                <div class="input-group mt-3">
+                                    <input type="text" class="form-control" id="userQuery" placeholder="输入您的问题...">
+                                    <button class="btn btn-primary" type="button" id="sendQueryBtn">
+                                        <i class="fas fa-paper-plane"></i> 发送
+                                    </button>
+                                </div>
+                                <div class="d-grid mt-3">
+                                    <button id="openChatBtn" class="btn btn-outline-primary" disabled>
+                                        <i class="fas fa-external-link-alt"></i> 打开完整聊天界面
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JavaScript -->
+    <script>
+        // 自动设置API基础URL为当前域名
+        const API_BASE = window.location.origin;
+        
+        // 更新状态显示
+        function updateStatus(type, message, details = '') {
+            const ragStatus = document.getElementById('ragStatus');
+            const icons = {
+                'info': 'fa-circle-notch fa-spin',
+                'success': 'fa-check-circle',
+                'warning': 'fa-exclamation-circle',
+                'danger': 'fa-exclamation-triangle',
+                'error': 'fa-unlink'
+            };
+            
+            const colors = {
+                'info': 'alert-info',
+                'success': 'alert-success',
+                'warning': 'alert-warning',
+                'danger': 'alert-danger',
+                'error': 'alert-danger'
+            };
+            
+            ragStatus.className = `alert ${colors[type] || 'alert-info'}`;
+            
+            let html = `<i class="fas ${icons[type] || 'fa-info-circle'}"></i> ${message}`;
+            if (details) {
+                html += `<br><small>${details}</small>`;
+            }
+            
+            ragStatus.innerHTML = html;
+        }
+        
+        // 检查服务状态
+        async function checkServiceStatus() {
+            try {
+                // 先检查健康状态
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                
+                if (!healthResponse.ok) {
+                    throw new Error(`健康检查失败: ${healthResponse.status}`);
+                }
+                
+                const healthData = await healthResponse.json();
+                
+                if (!healthData.model_loaded || !healthData.index_ready) {
+                    updateStatus('danger', '服务初始化失败', '嵌入模型或索引未正确加载');
+                    return;
+                }
+                
+                // 再检查RAG服务状态
+                const statusResponse = await fetch(`${API_BASE}/status`);
+                
+                if (!statusResponse.ok) {
+                    throw new Error(`状态检查失败: ${statusResponse.status}`);
+                }
+                
+                const statusData = await statusResponse.json();
+                
+                if (statusData.active) {
+                    document.getElementById('openChatBtn').disabled = false;
+                    updateStatus(
+                        'success', 
+                        '服务运行中',
+                        `知识库: ${statusData.knowledge_base} (${statusData.documents_count}个文档)`
+                    );
+                } else {
+                    updateStatus('warning', '服务未启动', '请配置并启动RAG服务');
+                }
+            } catch (err) {
+                console.error("服务状态检查失败:", err);
+                updateStatus('error', '无法连接到后端服务', err.message);
+            }
+        }
+        
+        // 启动RAG服务
+        document.getElementById('startRagBtn').addEventListener('click', async function() {
+            const kbPath = document.getElementById('kbPath').value;
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (!apiKey) {
+                alert('请输入DeepSeek API密钥');
+                return;
+            }
+            
+            const button = this;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/start_rag`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        kb_path: kbPath,
+                        api_key: apiKey
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `请求失败: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    alert(data.message);
+                    await checkServiceStatus();
+                } else {
+                    throw new Error(data.message || "启动失败");
+                }
+            } catch (err) {
+                alert('启动RAG服务失败: ' + err.message);
+                console.error(err);
+                updateStatus('danger', '启动失败', err.message);
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+        
+        // 发送问题
+        document.getElementById('sendQueryBtn').addEventListener('click', async function() {
+            const query = document.getElementById('userQuery').value.trim();
+            if (!query) return;
+            
+            const button = this;
+            button.disabled = true;
+            
+            const chatContainer = document.getElementById('chatContainer');
+            
+            // 添加用户消息
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message-container user-message';
+            userMsg.innerHTML = `
+                <div class="message-label">
+                    <span class="badge bg-primary">用户</span>
+                </div>
+                <div class="message-content">${query}</div>
+            `;
+            chatContainer.appendChild(userMsg);
+            
+            // 添加AI等待指示器
+            const aiWaiting = document.createElement('div');
+            aiWaiting.id = 'aiWaitingIndicator';
+            aiWaiting.className = 'message-container ai-message';
+            aiWaiting.innerHTML = `
+                <div class="message-label">
+                    <span class="badge bg-secondary">AI助手</span>
+                </div>
+                <div class="message-content">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>思考中...</span>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(aiWaiting);
+            
+            document.getElementById('userQuery').value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE}/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question: query })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `请求失败: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 移除等待指示器
+                const waitingElement = document.getElementById('aiWaitingIndicator');
+                if (waitingElement) {
+                    waitingElement.remove();
+                }
+                
+                if (data.answer) {
+                    // 添加AI回答
+                    const aiMsg = document.createElement('div');
+                    aiMsg.className = 'message-container ai-message';
+                    aiMsg.innerHTML = `
+                        <div class="message-label">
+                            <span class="badge bg-success">AI助手</span>
+                        </div>
+                        <div class="message-content">${data.answer}</div>
+                    `;
+                    chatContainer.appendChild(aiMsg);
+                } else {
+                    throw new Error("未收到有效回答");
+                }
+            } catch (err) {
+                // 移除等待指示器
+                const waitingElement = document.getElementById('aiWaitingIndicator');
+                if (waitingElement) {
+                    waitingElement.remove();
+                }
+                
+                // 显示错误
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'message-container error-message';
+                errorMsg.innerHTML = `
+                    <div class="message-label">
+                        <span class="badge bg-danger">错误</span>
+                    </div>
+                    <div class="message-content">${err.message}</div>
+                `;
+                chatContainer.appendChild(errorMsg);
+            } finally {
+                button.disabled = false;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        });
+        
+        // 初始状态检查
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟执行以避免启动竞争条件
+            setTimeout(() => {
+                checkServiceStatus();
+            }, 1000);
+        });
+        
+        // 浏览按钮
+        document.getElementById('browseKbPathBtn').addEventListener('click', function() {
+            alert('在实际桌面应用中，这里会打开目录选择对话框');
+            // 模拟选择一个路径
+            document.getElementById('kbPath').value = '/path/to/knowledge_base';
+        });
+        
+        // 打开完整聊天界面
+        document.getElementById('openChatBtn').addEventListener('click', function() {
+            alert('完整聊天界面功能将在后续版本中实现');
+        });
+        
+        // 用户输入框回车键支持
+        document.getElementById('userQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendQueryBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
