@@ -16,5 +16,8 @@ To execute the code:
 ## Note 
 ~~Only the plagiarism detection feature is fully operational at this stage. Other functionalities are undergoing testing and will be progressively refined in subsequent releases.~~
 
-All three main functions have been employed. If you do have better ideas or find bugs, please comment
+All three main functions have been employed. 
+
+If you do have better ideas or find bugs, please comment.
+
 The platform is undergoing previous updates, please wait and see. 
