@@ -4,102 +4,463 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>关于平台 - 智能二进制分析</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
+    :root {
+      --primary: #165DFF; /* 专业的蓝色主题 */
+      --primary-dark: #0e42c0;
+      --light-bg: #f0f7ff; /* 浅蓝色背景 */
+      --dark-text: #1a1a1a;
+      --card-shadow: 0 10px 30px rgba(22, 93, 255, 0.15);
+      --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #ffffff;
-      color: #212529;
+      color: var(--dark-text);
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
     }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
     .hero-section {
-      background: linear-gradient(135deg, #e3f6ff, #f5fcff);
-      padding: 80px 20px;
+      background: linear-gradient(135deg, #e3f0ff, #f0f7ff);
+      padding: 100px 20px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
+
+    .hero-section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') no-repeat center center/cover;
+      opacity: 0.05;
+    }
+
     .hero-section h1 {
-      font-size: 3rem;
-      color: #00aaff;
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 20px;
+      position: relative;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
+
     .hero-section p {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       max-width: 800px;
       margin: 20px auto 0;
+      position: relative;
+      line-height: 1.7;
+      color: #333;
     }
+
     .feature-section {
-      padding: 60px 20px;
+      padding: 80px 20px;
+      background: #ffffff;
     }
-    .feature {
-      margin-bottom: 40px;
-    }
-    .feature img {
-      width: 100%;
-      border-radius: 12px;
-    }
-    .feature h3 {
-      margin-top: 20px;
-      color: #0077cc;
-    }
-    .cta-section {
-      background-color: #f0fbff;
-      padding: 60px 20px;
+
+    .section-title {
       text-align: center;
+      margin-bottom: 60px;
+      position: relative;
     }
-    .cta-section h2 {
-      font-size: 2rem;
+
+    .section-title h2 {
+      font-size: 2.5rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .section-title::after {
+      content: "";
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(22, 93, 255, 0.1);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(22, 93, 255, 0.2);
+    }
+
+    /* 修复图片容器样式 */
+    .feature-img {
+      height: 250px;
+      overflow: hidden;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .feature-content {
+      padding: 30px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-content h3 {
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .feature-content p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: 25px;
+      flex-grow: 1;
+      color: #444;
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      color: var(--primary);
       margin-bottom: 20px;
     }
-    .btn-primary {
-      background-color: #00aaff;
-      border-color: #00aaff;
+
+    .cta-section {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      padding: 100px 20px;
+      text-align: center;
+      color: white;
+      position: relative;
+      overflow: hidden;
     }
+
+    .cta-section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') no-repeat center center/cover;
+      opacity: 0.15;
+    }
+
+    .cta-section h2 {
+      font-size: 2.8rem;
+      margin-bottom: 20px;
+      position: relative;
+      font-weight: 800;
+    }
+
+    .cta-section p {
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto 40px;
+      position: relative;
+      line-height: 1.7;
+    }
+
+    .btn-primary {
+      background-color: white;
+      color: var(--primary);
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: var(--transition);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      position: relative;
+      text-decoration: none;
+      display: inline-block;
+      cursor: pointer;
+    }
+
     .btn-primary:hover {
-      background-color: #007acc;
+      background-color: #f0fbff;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-primary i {
+      margin-right: 10px;
+    }
+
+    .tech-stack {
+      background: var(--light-bg);
+      padding: 80px 20px;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .tech-item {
+      background: white;
+      border-radius: 15px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition);
+      border: 1px solid rgba(22, 93, 255, 0.1);
+    }
+
+    .tech-item:hover {
+      transform: translateY(-10px);
+    }
+
+    .tech-icon {
+      font-size: 3.5rem;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    .tech-item h4 {
+      font-size: 1.3rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .hero-section h1 {
+        font-size: 2.5rem;
+      }
+
+      .hero-section p {
+        font-size: 1.1rem;
+      }
+
+      .section-title h2 {
+        font-size: 2rem;
+      }
+
+      .cta-section h2 {
+        font-size: 2.2rem;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <!-- Hero Section -->
-  <div class="hero-section">
-    <h1>大模型引领二进制分析新时代</h1>
-    <p>本平台致力于将先进的大语言模型能力应用于网络安全与漏洞检测，提升安全分析的自动化、智能化水平。</p>
-  </div>
+  <section class="hero-section">
+    <div class="container">
+      <h1>大模型引领二进制分析新时代</h1>
+      <p>本平台致力于将先进的大语言模型能力应用于网络安全与漏洞检测，通过深度学习和语义分析技术，显著提升安全分析的自动化、智能化水平，为安全专家提供前所未有的分析能力。</p>
+    </div>
+  </section>
 
   <!-- Features Section -->
-  <div class="container feature-section">
-    <div class="row feature align-items-center">
-      <div class="col-md-6">
-        <img src="images/ai-analysis.jpg" alt="AI Analysis">
+  <section class="feature-section">
+    <div class="container">
+      <div class="section-title">
+        <h2>平台核心优势</h2>
       </div>
-      <div class="col-md-6">
-        <h3>基于大语言模型的语义分析</h3>
-        <p>平台依托GPT等大语言模型对反汇编代码、函数调用、语义结构进行深度理解，显著提升漏洞识别准确率。</p>
+
+      <div class="features-grid">
+        <!-- 基于大模型的语义分析卡片 - 使用本地图片 -->
+        <div class="feature-card">
+          <div class="feature-img" style="background-image: url('https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80')">
+          </div>
+          <div class="feature-content">
+            <div class="feature-icon">
+              <i class="fas fa-brain"></i>
+            </div>
+            <h3>基于大语言模型的语义分析</h3>
+            <p>平台依托GPT等大语言模型对反汇编代码、函数调用、语义结构进行深度理解，通过自然语言处理技术解析复杂代码逻辑，显著提升漏洞识别准确率。</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-img" style="background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80')">
+          </div>
+          <div class="feature-content">
+            <div class="feature-icon">
+              <i class="fas fa-microchip"></i>
+            </div>
+            <h3>支持多架构、多平台</h3>
+            <p>无论是x86、ARM 还是MIPS架构，平台均可进行跨架构的漏洞分析，兼容主流操作系统与固件格式，提供统一的分析体验。</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-img" style="background-image: url('https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80')">
+          </div>
+          <div class="feature-content">
+            <div class="feature-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>集成安全知识图谱</h3>
+            <p>整合CVE、CWE、CAPEC等安全知识库，构建全面的安全知识图谱，提供语义关联推理与漏洞定位能力，助力专业分析决策。</p>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="row feature align-items-center flex-md-row-reverse">
-      <div class="col-md-6">
-        <img src="images/cross-architecture.webp" alt="Cross Architecture">
+  </section>
+
+  <!-- Tech Stack Section -->
+  <section class="tech-stack">
+    <div class="container">
+      <div class="section-title">
+        <h2>核心技术栈</h2>
       </div>
-      <div class="col-md-6">
-        <h3>支持多架构、多平台</h3>
-        <p>无论是x86、ARM 还是MIPS架构，平台均可进行跨架构的漏洞分析，兼容主流操作系统与固件格式。</p>
+
+      <div class="tech-grid">
+        <div class="tech-item">
+          <div class="tech-icon">
+            <i class="fab fa-python"></i>
+          </div>
+          <h4>Python</h4>
+        </div>
+
+        <div class="tech-item">
+          <div class="tech-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h4>深度学习</h4>
+        </div>
+
+        <div class="tech-item">
+          <div class="tech-icon">
+            <i class="fas fa-project-diagram"></i>
+          </div>
+          <h4>知识图谱</h4>
+        </div>
+
+        <div class="tech-item">
+          <div class="tech-icon">
+            <i class="fas fa-cloud"></i>
+          </div>
+          <h4>云原生架构</h4>
+        </div>
       </div>
     </div>
-    <div class="row feature align-items-center">
-      <div class="col-md-6">
-        <img src="images/security-intelligence.jpg" alt="Security Intelligence">
-      </div>
-      <div class="col-md-6">
-        <h3>集成安全知识图谱</h3>
-        <p>整合CVE、CWE、CAPEC等安全知识库，提供语义关联推理与漏洞定位能力，助力专业分析决策。</p>
-      </div>
-    </div>
-  </div>
+  </section>
 
   <!-- Call to Action -->
-  <div class="cta-section">
-    <h2>立即体验智能二进制分析平台</h2>
-    <p>释放AI的强大潜力，重塑漏洞检测的未来。</p>
-    <a href="index.html" class="btn btn-primary btn-lg mt-3">返回首页</a>
-  </div>
+  <section class="cta-section">
+    <div class="container">
+      <h2>立即体验智能二进制分析平台</h2>
+      <p>释放AI的强大潜力，重塑漏洞检测的未来。加入数千名安全专家使用的平台，提升您的安全分析效率。</p>
+      <a href="index.html" class="btn-primary">
+        <i class="fas fa-rocket"></i> 返回首页
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 智能二进制分析平台 | 为安全专家打造的专业分析工具</p>
+    </div>
+  </footer>
+
+  <script>
+    // 添加滚动动画效果
+    document.addEventListener('DOMContentLoaded', function() {
+      const featureCards = document.querySelectorAll('.feature-card');
+      const techItems = document.querySelectorAll('.tech-item');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = 1;
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      featureCards.forEach(card => {
+        card.style.opacity = 0;
+        card.style.transform = 'translateY(50px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+      });
+
+      techItems.forEach(item => {
+        item.style.opacity = 0;
+        item.style.transform = 'translateY(30px)';
+        item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(item);
+      });
+
+      // 图片加载失败检测
+      document.querySelectorAll('.feature-img').forEach(imgContainer => {
+        const img = new Image();
+        img.src = imgContainer.style.backgroundImage.slice(5, -2);
+        img.onerror = function() {
+          // 使用备用图片
+          imgContainer.style.backgroundImage = 'none';
+          imgContainer.style.backgroundColor = '#e3f0ff';
+          imgContainer.innerHTML = `
+            <div style="
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
+              color: #165DFF;
+              font-size: 1.2rem;
+              font-weight: bold;
+              text-align: center;
+              padding: 20px;
+            ">
+              <div>
+                <i class="fas fa-brain fa-3x mb-3"></i>
+                <p>基于大语言模型的语义分析</p>
+              </div>
+            </div>
+          `;
+        };
+      });
+    });
+  </script>
 </body>
 </html>
