@@ -1,3 +1,4 @@
+# model_handler.py
 import requests
 import json
 import logging
@@ -19,40 +20,74 @@ class ModelHandler:
         self.max_retries = 2
         self._api_call_count = 0
 
-    def generate_analysis(self, prompt: str, model_type: Optional[str] = None) -> str:
-        """生成分析报告（增强错误处理）"""
+    def generate_analysis(self, prompt: str, model_type: Optional[str] = None, **kwargs) -> str:
+        """生成分析报告（增强错误处理）
+        
+        支持可选参数：
+        - temperature: 生成温度（0-2）
+        - max_tokens: 最大token数
+        - top_p: 核心采样概率
+        - presence_penalty: 主题重复惩罚
+        - frequency_penalty: token重复惩罚
+        """
         model = model_type or self.default_model
         try:
             if model == "deepseek":
-                return self._call_deepseek_v2(prompt)  # 使用新版调用方法
+                # 从kwargs中提取参数，如果未提供则使用默认值
+                temperature = kwargs.get('temperature', 0.3)
+                max_tokens = kwargs.get('max_tokens', 2000)
+                top_p = kwargs.get('top_p', 0.95)
+                presence_penalty = kwargs.get('presence_penalty', 0.0)
+                frequency_penalty = kwargs.get('frequency_penalty', 0.0)
+                
+                return self._call_deepseek_v2(
+                    prompt, 
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                    presence_penalty=presence_penalty,
+                    frequency_penalty=frequency_penalty
+                )
             elif model == "qwen":
-                return self._call_qwen(prompt)
+                # 从kwargs中提取参数，如果未提供则使用默认值
+                temperature = kwargs.get('temperature', 0.3)
+                max_tokens = kwargs.get('max_tokens', 2000)
+                
+                return self._call_qwen(
+                    prompt,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
             else:
                 raise ValueError(f"Unsupported model: {model}")
         except Exception as e:
             logging.error(f"模型调用失败: {str(e)}", exc_info=True)
             return "分析服务暂不可用"
 
-    # 新增深度求索官方规范调用方法
-    def _call_deepseek_v2(self, prompt: str) -> str:
-        """严格遵循DeepSeek最新接口规范"""
+    # 新增深度求索官方规范调用方法（支持更多参数）
+    def _call_deepseek_v2(self, prompt: str, **kwargs) -> str:
+        """严格遵循DeepSeek最新接口规范，支持更多生成参数"""
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key.strip()}",
             "Accept": "application/json"  # 明确声明接受的响应类型
         }
 
-        payload = {
+        # 设置默认参数，允许通过kwargs覆盖
+        default_params = {
             "model": "deepseek-chat",
             "messages": [{
                 "role": "user",
                 "content": prompt
             }],
             "temperature": 0.3,
-            "top_p": 0.95,  # 新增官方推荐参数
+            "top_p": 0.95,
             "max_tokens": 2000,
-            "stream": False  # 明确关闭流式传输
+            "stream": False
         }
+        
+        # 合并默认参数和传入参数
+        payload = {**default_params, **kwargs}
 
         for attempt in range(self.max_retries + 1):  # 包含初始尝试
             try:
@@ -102,18 +137,24 @@ class ModelHandler:
 
         return "请求失败，请稍后重试"
 
-    def _call_qwen(self, prompt: str) -> str:
-        """保持原有Qwen调用逻辑"""
+    def _call_qwen(self, prompt: str, **kwargs) -> str:
+        """Qwen调用逻辑，支持更多参数"""
         from dashscope import Generation
         Generation.api_key = self.api_key
 
+        # 设置默认参数，允许通过kwargs覆盖
+        default_params = {
+            'model': 'qwen-max',
+            'prompt': prompt,
+            'max_length': 2000,
+            'temperature': 0.3
+        }
+        
+        # 合并默认参数和传入参数
+        params = {**default_params, **kwargs}
+
         try:
-            response = Generation.call(
-                model='qwen-max',
-                prompt=prompt,
-                max_length=2000,
-                temperature=0.3
-            )
+            response = Generation.call(**params)
             if response.status_code != 200:
                 raise ConnectionError(f"API请求失败: {response.status_code}")
             return response.output.text
