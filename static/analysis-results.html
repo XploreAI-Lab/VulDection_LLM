@@ -3,1000 +3,1204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分析结果详情 - 二进制代码分析平台</title>
+    <title>抄袭检测结果 - 二进制代码分析平台</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <!-- PDF导出库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            --glass-bg: rgba(255, 255, 255, 0.98);
-            --shadow-primary: 0 12px 40px rgba(99, 102, 241, 0.08);
-            --text-dark: #1f2937;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --sky-blue: #f8fafc;
-            --deep-blue: #1e40af;
-            --accent-orange: #f59e0b;
-            --border-light: #e2e8f0;
-            --nav-height: 70px;
-        }
+    :root {
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --glass-bg: rgba(255, 255, 255, 0.98);
+      --shadow-primary: 0 12px 40px rgba(99, 102, 241, 0.08);
+      --text-dark: #1f2937;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --sky-blue: #f8fafc;
+      --deep-blue: #1e40af;
+      --accent-orange: #f59e0b;
+      --border-light: #e2e8f0;
+      --nav-height: 70px;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+      color: #212529;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: var(--nav-height);
+    }
+    
+    /* 现代化导航栏样式 */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: rgba(21, 48, 160, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      transition: var(--transition);
+    }
 
-        body {
-            background-color: #f8f9fa;
-            color: #212529;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-top: var(--nav-height);
-        }
+    .navbar.scrolled {
+      background: rgba(21, 48, 160, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
 
-        /* 现代化导航栏样式 */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--nav-height);
-            background: rgba(21, 48, 160, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            padding: 0 2rem;
-            transition: var(--transition);
-        }
+    .logo {
+      display: flex;
+      align-items: center;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-right: 2rem;
+    }
 
-        .navbar.scrolled {
-            background: rgba(21, 48, 160, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        }
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-right: 0.7rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.25rem;
-            margin-right: 2rem;
-        }
+    .nav-links {
+      display: flex;
+      flex: 1;
+    }
 
-        .logo-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            margin-right: 0.7rem;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
-        }
+    .nav-link {
+      position: relative;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0.8rem 1.2rem;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      border-radius: 6px;
+      margin: 0 0.2rem;
+    }
+    
+    .nav-link i { 
+      margin-right: 0.5rem;
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
 
-        .nav-links {
-            display: flex;
-            flex: 1;
-        }
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
 
-        .nav-link {
-            position: relative;
-            color: rgba(255, 255, 255, 0.85);
-            padding: 0.8rem 1.2rem;
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            border-radius: 6px;
-            margin: 0 0.2rem;
-        }
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-weight: 500;
+    }
 
-        .nav-link i {
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
-            transition: var(--transition);
-        }
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 3px;
+      background: #00d1ff;
+      border-radius: 3px 3px 0 0;
+    }
 
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+    .dropdown {
+      position: relative;
+    }
 
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-weight: 500;
-        }
+    .dropdown-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
 
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70%;
-            height: 3px;
-            background: #00d1ff;
-            border-radius: 3px 3px 0 0;
-        }
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 220px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      padding: 0.5rem 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: var(--transition);
+      z-index: 100;
+    }
 
-        .dropdown {
-            position: relative;
-        }
+    .dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
 
-        .dropdown-toggle {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
+    .dropdown-item {
+      display: block;
+      padding: 0.7rem 1.5rem;
+      color: #1f2937;
+      text-decoration: none;
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
 
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 220px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            padding: 0.5rem 0;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(10px);
-            transition: var(--transition);
-            z-index: 100;
-        }
+    .dropdown-item:hover {
+      background: rgba(22, 93, 255, 0.1);
+      color: #165DFF;
+    }
 
-        .dropdown:hover .dropdown-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
+    .dropdown-item i {
+      margin-right: 0.7rem;
+      width: 20px;
+      text-align: center;
+    }
 
-        .dropdown-item {
-            display: block;
-            padding: 0.7rem 1.5rem;
-            color: #1f2937;
-            text-decoration: none;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
 
-        .dropdown-item:hover {
-            background: rgba(22, 93, 255, 0.1);
-            color: #165DFF;
-        }
+    .search-container {
+      position: relative;
+      margin-right: 1rem;
+    }
 
-        .dropdown-item i {
-            margin-right: 0.7rem;
-            width: 20px;
-            text-align: center;
-        }
+    .search-input {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50px;
+      padding: 0.6rem 1.2rem 0.6rem 2.5rem;
+      color: white;
+      font-size: 0.9rem;
+      width: 200px;
+      transition: var(--transition);
+    }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-        }
+    .search-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.25);
+      width: 250px;
+    }
 
-        .search-container {
-            position: relative;
-            margin-right: 1rem;
-        }
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
 
-        .search-input {
-            background: rgba(255, 255, 255, 0.15);
-            border: none;
-            border-radius: 50px;
-            padding: 0.6rem 1.2rem 0.6rem 2.5rem;
-            color: white;
-            font-size: 0.9rem;
-            width: 200px;
-            transition: var(--transition);
-        }
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.7);
+    }
 
-        .search-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.25);
-            width: 250px;
-        }
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      background: rgba(255, 255, 255, 0.15);
+      margin-left: 0.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
 
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
 
-        .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.7);
-        }
+    .notification-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      background: #ff4d4f;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: white;
+      font-weight: bold;
+    }
 
-        .action-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            background: rgba(255, 255, 255, 0.15);
-            margin-left: 0.5rem;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-left: 1rem;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: var(--transition);
+      background: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
 
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
-        }
+    .user-avatar:hover {
+      border-color: #00d1ff;
+      transform: scale(1.05);
+    }
 
-        .notification-badge {
-            position: absolute;
-            top: -3px;
-            right: -3px;
-            width: 18px;
-            height: 18px;
-            background: #ff4d4f;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            color: white;
-            font-weight: bold;
-        }
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin-left: 1rem;
-            cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: var(--transition);
-            background: #9ca3af;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
 
-        .user-avatar:hover {
-            border-color: #00d1ff;
-            transform: scale(1.05);
-        }
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+      .nav-link span {
+        display: none;
+      }
 
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+      .nav-link i {
+        margin-right: 0;
+        font-size: 1.2rem;
+      }
 
-        .mobile-toggle {
-            display: none;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            margin-left: 1rem;
-        }
+      .nav-link {
+        padding: 0.8rem;
+      }
 
-        /* 响应式设计 */
-        @media (max-width: 1200px) {
-            .nav-link span {
-                display: none;
-            }
+      .search-input {
+        width: 40px;
+        padding-left: 40px;
+      }
 
-            .nav-link i {
-                margin-right: 0;
-                font-size: 1.2rem;
-            }
+      .search-input:focus {
+        width: 200px;
+      }
+    }
 
-            .nav-link {
-                padding: 0.8rem;
-            }
+    @media (max-width: 992px) {
+      .navbar {
+        padding: 0 1rem;
+      }
 
-            .search-input {
-                width: 40px;
-                padding-left: 40px;
-            }
+      .nav-links {
+        position: fixed;
+        top: var(--nav-height);
+        left: 0;
+        width: 100%;
+        background: rgba(21, 48, 160, 0.98);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+      }
 
-            .search-input:focus {
-                width: 200px;
-            }
-        }
+      .nav-links.active {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+      }
 
-        @media (max-width: 992px) {
-            .navbar {
-                padding: 0 1rem;
-            }
+      .nav-link {
+        width: 100%;
+        margin: 0.3rem 0;
+        padding: 0.9rem 1.2rem;
+      }
 
-            .nav-links {
-                position: fixed;
-                top: var(--nav-height);
-                left: 0;
-                width: 100%;
-                background: rgba(21, 48, 160, 0.98);
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 1rem;
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-                transform: translateY(-100%);
-                opacity: 0;
-            visibility: hidden;
-            transition: var(--transition);
-        }
+      .nav-link span {
+        display: inline;
+      }
 
-        .nav-links.active {
-            transform: translateY(0);
-            opacity: 1;
-            visibility: visible;
-        }
+      .dropdown-menu {
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        background: rgba(255, 255, 255, 0.05);
+        margin-top: 0.5rem;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        display: none;
+      }
 
-        .nav-link {
-            width: 100%;
-            margin: 0.3rem 0;
-            padding: 0.9rem 1.2rem;
-        }
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
 
-        .nav-link span {
-            display: inline;
-        }
+      .dropdown-item {
+        color: rgba(255, 255, 255, 0.85);
+        padding-left: 2.5rem;
+      }
 
-        .dropdown-menu {
-            position: static;
-            width: 100%;
-            box-shadow: none;
-            background: rgba(255, 255, 255, 0.05);
-            margin-top: 0.5rem;
-            opacity: 1;
-            visibility: visible;
-            transform: none;
-            display: none;
-        }
+      .dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
 
-        .dropdown:hover .dropdown-menu {
-            display: block;
-        }
+      .mobile-toggle {
+        display: block;
+      }
 
-        .dropdown-item {
-            color: rgba(255, 255, 255, 0.85);
-            padding-left: 2.5rem;
-        }
+      .search-container {
+        margin-right: 0.5rem;
+      }
 
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+      .search-input {
+        width: 40px;
+        padding-left: 40px;
+      }
 
-        .mobile-toggle {
-            display: block;
-        }
-
-        .search-container {
-            margin-right: 0.5rem;
-        }
-
-        .search-input {
-            width: 40px;
-            padding-left: 40px;
-        }
-
-        .search-input:focus {
-            width: 200px;
-        }
+      .search-input:focus {
+        width: 200px;
+      }
     }
 
     /* 内容区域样式 */
     .main-content {
-        padding: 2rem;
-        background-color: #f8f9fa;
+      padding: 2rem;
+      background-color: #f8f9fa;
     }
 
     /* 抄袭检测页面特有样式 */
     .upload-card .card {
-        background: var(--glass-bg);
-        border-radius: 1rem;
-        box-shadow: var(--shadow-primary);
-        border: 1px solid var(--border-light);
+      background: var(--glass-bg);
+      border-radius: 1rem;
+      box-shadow: var(--shadow-primary);
+      border: 1px solid var(--border-light);
     }
 
     .upload-zone {
-        border: 2px dashed #cbd5e1;
-        border-radius: 0.75rem;
-        padding: 2.5rem 1rem;
-        text-align: center;
-        background: rgba(241, 245, 249, 0.3);
-        transition: var(--transition);
-        cursor: pointer;
-        position: relative;
+      border: 2px dashed #cbd5e1;
+      border-radius: 0.75rem;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      background: rgba(241, 245, 249, 0.3);
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
     }
 
     .upload-zone:hover {
-        border-color: var(--accent-orange);
-        background: rgba(253, 230, 138, 0.1);
+      border-color: var(--accent-orange);
+      background: rgba(253, 230, 138, 0.1);
     }
 
     .button-group {
-        display: flex;
-        gap: 0.75rem;
-        margin-top: 1.5rem;
-        flex-wrap: wrap;
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
     }
 
     .custom-button {
-        padding: 0.625rem 1.25rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: var(--transition);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        border: 1px solid transparent;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid transparent;
     }
 
     .custom-button.success {
-        background: #165DFF;
-        color: white;
+      background: #165DFF;
+      color: white;
     }
 
     .custom-button.success:hover {
-        background: #1e3a8a;
-        transform: translateY(-1px);
+      background: #1e3a8a;
+      transform: translateY(-1px);
     }
 
     .custom-button.danger {
-        background: #ef4444;
-        color: white;
+      background: #ef4444;
+      color: white;
     }
 
     .custom-button.danger:hover {
-        background: #dc2626;
+      background: #dc2626;
     }
 
     .file-list {
-        margin-top: 1rem;
-        border-radius: 0.5rem;
-        overflow: hidden;
+      margin-top: 1rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
     }
 
     .file-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 1rem;
-        background: white;
-        border-bottom: 1px solid var(--border-light);
-        transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: white;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.2s;
     }
 
     .file-item:hover {
-        background: #f8fafc;
+      background: #f8fafc;
     }
 
-    .file-actions button {
-        color: #64748b;
-        padding: 0.25rem;
-        border-radius: 0.25rem;
-        transition: all 0.2s;
+    /* Markdown内容样式 */
+    #ai-report-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-light);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      max-height: 500px;
+      overflow: auto;
     }
-
-    .file-actions button:hover {
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.05);
+    
+    #ai-report-content h1, 
+    #ai-report-content h2, 
+    #ai-report-content h3 {
+      color: #1e40af;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.3em;
+      margin-top: 1.5em;
+      margin-bottom: 1em;
     }
-
-    pre#ai-report-content {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        border: 1px solid var(--border-light);
-        white-space: pre-wrap;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        max-height: 500px;
-        overflow: auto;
+    
+    #ai-report-content h1 {
+      font-size: 1.5em;
+    }
+    
+    #ai-report-content h2 {
+      font-size: 1.3em;
+    }
+    
+    #ai-report-content h3 {
+      font-size: 1.1em;
+    }
+    
+    #ai-report-content p {
+      margin-bottom: 1em;
+    }
+    
+    #ai-report-content ul, 
+    #ai-report-content ol {
+      padding-left: 2em;
+      margin-bottom: 1em;
+    }
+    
+    #ai-report-content li {
+      margin-bottom: 0.5em;
+    }
+    
+    #ai-report-content code {
+      background-color: #f1f5f9;
+      padding: 0.2em 0.4em;
+      border-radius: 0.3em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    
+    #ai-report-content pre {
+      background-color: #f8fafc;
+      padding: 1em;
+      border-radius: 0.5em;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+      margin-bottom: 1.5em;
+    }
+    
+    #ai-report-content blockquote {
+      border-left: 4px solid #165DFF;
+      background-color: #f8fafc;
+      padding: 0.5em 1em;
+      margin: 1em 0;
+      border-radius: 0 0.5em 0.5em 0;
+    }
+    
+    #ai-report-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5em;
+    }
+    
+    #ai-report-content th, 
+    #ai-report-content td {
+      padding: 0.5em;
+      border: 1px solid #e2e8f0;
+    }
+    
+    #ai-report-content th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+    
+    #ai-report-content tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    
+    #ai-report-content .highlight {
+      background-color: #fff9db;
+      padding: 0.1em 0.3em;
+      border-radius: 0.2em;
     }
 
     .collapse-header {
-        padding: 1rem 1.5rem;
-        transition: background 0.2s;
-        border-radius: 0.75rem 0.75rem 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
+      padding: 1rem 1.5rem;
+      transition: background 0.2s;
+      border-radius: 0.75rem 0.75rem 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
     }
 
     .collapse-header:hover {
-        background: #f8fafc;
+      background: #f8fafc;
     }
 
     .collapse-icon {
-        transition: transform 0.3s ease;
+      transition: transform 0.3s ease;
     }
 
     .collapse-content {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
     }
 
     .detail-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
     }
 
     /* 新增的进度条动画样式 */
     .progress-bar {
-        transition: width 1.5s ease-in-out;
+      transition: width 1.5s ease-in-out;
     }
 
     .progress-value {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        display: block;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: block;
     }
 
     /* 新增的相似度图表容器 */
     .similarity-chart-container {
-        margin-top: 2rem;
-        height: 300px;
+      margin-top: 2rem;
+      height: 300px;
     }
 
     /* 新添加的搜索建议样式 */
     .search-suggestions {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border-radius: 0 0 10px 10px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        max-height: 300px;
-        overflow-y: auto;
-        z-index: 1000;
-        display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
     }
 
     .search-suggestions.show {
-        display: block;
+      display: block;
     }
 
     .suggestion-item {
-        padding: 12px 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid #f1f1f1;
-        transition: background 0.2s;
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #f1f1f1;
+      transition: background 0.2s;
     }
 
     .suggestion-item:hover {
-        background: #f5f8ff;
+      background: #f5f8ff;
     }
 
     .suggestion-item i {
-        margin-right: 10px;
-        width: 20px;
-        text-align: center;
-        color: #165DFF;
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+      color: #165DFF;
     }
 
     .suggestion-category {
-        font-size: 0.8rem;
-        color: #666;
-        padding: 8px 16px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        background: #f9f9f9;
-        font-weight: 600;
+      font-size: 0.8rem;
+      color: #666;
+      padding: 8px 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #f9f9f9;
+      font-weight: 600;
     }
 
     .search-hint {
-        position: absolute;
-        top: 50%;
-        right: 15px;
-        transform: translateY(-50%);
-        font-size: 0.85rem;
-        color: #aaa;
-        padding: 2px 8px;
-        background: rgba(255,255,255,0.5);
-        border-radius: 4px;
-        pointer-events: none;
-        transition: opacity 0.2s;
-        opacity: 0;
+      position: absolute;
+      top: 50%;
+      right: 15px;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      color: #aaa;
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 4px;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      opacity: 0;
     }
 
     .search-hint.show {
-        opacity: 1;
+      opacity: 1;
     }
 
     /* 登录模态框样式 */
     #loginPage {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     #loginPage.active {
-        display: flex;
-        opacity: 1;
+      display: flex;
+      opacity: 1;
     }
 
     .login-container {
-        background: white;
-        border-radius: 16px;
-        width: 90%;
-        max-width: 420px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        overflow: hidden;
-        transform: translateY(20px);
-        transition: transform 0.3s ease;
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
     }
 
     #loginPage.active .login-container {
-        transform: translateY(0);
+      transform: translateY(0);
     }
 
     .login-header {
-        background: linear-gradient(135deg, #165DFF 0%, #7B61FF 100%);
-        color: white;
-        padding: 28px 32px;
-        text-align: center;
-        position: relative;
+      background: linear-gradient(135deg, #165DFF 0%, #7B61FF 100%);
+      color: white;
+      padding: 28px 32px;
+      text-align: center;
+      position: relative;
     }
 
     .login-header h2 {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin-bottom: 8px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
     }
 
     .login-header p {
-        opacity: 0.9;
-        font-size: 0.95rem;
+      opacity: 0.9;
+      font-size: 0.95rem;
     }
 
     .close-login {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
     .close-login:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: rotate(90deg);
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
     }
 
     .login-body {
-        padding: 32px;
+      padding: 32px;
     }
 
     .input-group {
-        margin-bottom: 20px;
+      margin-bottom: 20px;
     }
 
     .input-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #374151;
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #374151;
     }
 
     .input-group input {
-        width: 100%;
-        padding: 14px 16px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.2s;
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: all 0.2s;
     }
 
     .input-group input:focus {
-        outline: none;
-        border-color: #165DFF;
-        box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+      outline: none;
+      border-color: #165DFF;
+      box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
     }
 
     .input-group input.error {
-        border-color: #ef4444;
+      border-color: #ef4444;
     }
 
     .error-message {
-        color: #ef4444;
-        font-size: 0.85rem;
-        margin-top: 6px;
-        display: none;
+      color: #ef4444;
+      font-size: 0.85rem;
+      margin-top: 6px;
+      display: none;
     }
 
     .remember-forgot {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
     }
 
     .remember {
-        display: flex;
-        align-items: center;
+      display: flex;
+      align-items: center;
     }
 
     .remember input {
-        margin-right: 8px;
+      margin-right: 8px;
     }
 
     .forgot-password {
-        color: #165DFF;
-        text-decoration: none;
-        transition: color 0.2s;
+      color: #165DFF;
+      text-decoration: none;
+      transition: color 0.2s;
     }
 
     .forgot-password:hover {
-        color: #0e42c0;
-        text-decoration: underline;
+      color: #0e42c0;
+      text-decoration: underline;
     }
 
     .login-btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #165DFF 0%, #7B61FF 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 4px 6px rgba(22, 93, 255, 0.2);
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #165DFF 0%, #7B61FF 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(22, 93, 255, 0.2);
     }
 
     .login-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 10px rgba(22, 93, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(22, 93, 255, 0.3);
     }
 
     .login-btn:active {
-        transform: translateY(0);
+      transform: translateY(0);
     }
 
     .divider {
-        display: flex;
-        align-items: center;
-        margin: 24px 0;
-        color: #6b7280;
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: #6b7280;
     }
 
     .divider::before,
     .divider::after {
-        content: "";
-        flex: 1;
-        height: 1px;
-        background-color: #e5e7eb;
+      content: "";
+      flex: 1;
+      height: 1px;
+      background-color: #e5e7eb;
     }
 
     .divider span {
-        padding: 0 12px;
-        font-size: 0.9rem;
+      padding: 0 12px;
+      font-size: 0.9rem;
     }
 
     .social-login {
-        display: flex;
-        justify-content: center;
-        gap: 16px;
-        margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .social-btn {
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        cursor: pointer;
-        transition: all 0.2s;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
     .social-btn:hover {
-        background: #e5e7eb;
-        transform: translateY(-2px);
+      background: #e5e7eb;
+      transform: translateY(-2px);
     }
 
     .social-btn.google {
-        color: #ea4335;
+      color: #ea4335;
     }
 
     .social-btn.github {
-        color: #333;
+      color: #333;
     }
 
     .social-btn.twitter {
-        color: #1da1f2;
+      color: #1da1f2;
     }
 
     .signup-link {
-        text-align: center;
-        font-size: 0.95rem;
-        color: #6b7280;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #6b7280;
     }
 
     .signup-link a {
-        color: #165DFF;
-        text-decoration: none;
-        font-weight: 600;
-        margin-left: 4px;
-        transition: color 0.2s;
+      color: #165DFF;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 4px;
+      transition: color 0.2s;
     }
 
     .signup-link a:hover {
-        color: #0e42c0;
-        text-decoration: underline;
+      color: #0e42c0;
+      text-decoration: underline;
     }
 
     /* 加载层 */
     #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 3000;
-        backdrop-filter: blur(5px);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      backdrop-filter: blur(5px);
     }
 
     .spinner {
-        width: 60px;
-        height: 60px;
-        border: 5px solid rgba(22, 93, 255, 0.2);
-        border-radius: 50%;
-        border-top-color: #165DFF;
-        animation: spin 1s linear infinite;
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(22, 93, 255, 0.2);
+      border-radius: 50%;
+      border-top-color: #165DFF;
+      animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     /* 通知动画 */
     @keyframes slide-in {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
 
     @keyframes slide-out {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
     }
 
     .animate-slide-in {
-        animation: slide-in 0.3s ease-out forwards;
+      animation: slide-in 0.3s ease-out forwards;
     }
 
     .animate-slide-out {
-        animation: slide-out 0.3s ease-in forwards;
+      animation: slide-out 0.3s ease-in forwards;
     }
 
     /* 新增的注销菜单样式 */
     .logout-menu {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        width: 200px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        padding: 1rem;
-        z-index: 1001;
-        transform: translateY(10px);
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 200px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 1rem;
+      z-index: 1001;
+      transform: translateY(10px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
     }
 
     .logout-menu.active {
-        transform: translateY(0);
-        opacity: 1;
-        visibility: visible;
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
     }
 
     .logout-menu p {
-        margin-bottom: 10px;
-        font-size: 0.9rem;
-        color: #555;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #555;
     }
 
     #logoutBtn {
-        width: 100%;
-        padding: 8px 12px;
-        background: #ef4444;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.2s;
+      width: 100%;
+      padding: 8px 12px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
     #logoutBtn:hover {
-        background: #dc2626;
+      background: #dc2626;
     }
     
     /* 新增配置状态显示 */
     .config-status {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        margin-left: 10px;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-left: 10px;
     }
     
     .config-ok {
-        background-color: rgba(40, 167, 69, 0.15);
-        color: #28a745;
+      background-color: rgba(40, 167, 69, 0.15);
+      color: #28a745;
     }
     
     .config-missing {
-        background-color: rgba(220, 53, 69, 0.15);
-        color: #dc3545;
+      background-color: rgba(220, 53, 69, 0.15);
+      color: #dc3545;
     }
     
     .config-status-icon {
-        margin-right: 5px;
+      margin-right: 5px;
     }
     
     .chart-container {
-        height: 300px;
-        margin-top: 20px;
+      height: 300px;
+      margin-top: 20px;
     }
-</style>
+    
+    /* 导出模态框样式 */
+    #exportModal {
+      z-index: 2100;
+    }
+    
+    .modal-header {
+      background: linear-gradient(135deg, #165DFF 0%, #7B61FF 100%);
+      color: white;
+    }
+    
+    .export-option {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .export-option:hover {
+      border-color: #165DFF;
+      background-color: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    
+    .export-option.active {
+      border-color: #165DFF;
+      background-color: #e6f0ff;
+    }
+    
+    .export-option i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #165DFF;
+    }
+    
+    .export-progress {
+      height: 8px;
+      border-radius: 4px;
+      background-color: #e2e8f0;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+    
+    .export-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #165DFF, #7B61FF);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    /* 导出报告预览样式 */
+    .report-preview {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    .report-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #165DFF;
+    }
+    
+    .report-logo {
+      font-size: 2rem;
+      color: #165DFF;
+      margin-bottom: 10px;
+    }
+    
+    .report-title {
+      font-size: 1.8rem;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+    
+    .report-subtitle {
+      color: #64748b;
+      font-size: 1rem;
+    }
+    
+    .report-section {
+      margin-bottom: 30px;
+    }
+    
+    .report-section-title {
+      font-size: 1.4rem;
+      color: #165DFF;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .report-footer {
+      text-align: center;
+      padding-top: 20px;
+      margin-top: 30px;
+      border-top: 1px solid #e2e8f0;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    
+    .watermark {
+      position: absolute;
+      opacity: 0.05;
+      font-size: 6rem;
+      color: #165DFF;
+      transform: rotate(-45deg);
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      pointer-events: none;
+      z-index: -1;
+    }
+    </style>
 </head>
 <body>
   <!-- 现代化导航栏 -->
@@ -1048,7 +1252,7 @@
             <i class="fa fa-question-circle"></i> 漏洞专家问答
           </a>
         </div>
-      </div>
+    </div>
 
       <div class="dropdown">
         <div class="nav-link">
@@ -1170,97 +1374,262 @@
   <div id="loadingOverlay">
     <div class="spinner"></div>
   </div>
+  
+  <!-- 导出模态框 -->
+  <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exportModalLabel"><i class="fas fa-file-export me-2"></i>导出报告</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="mb-3">请选择导出格式：</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="export-option active" data-format="pdf">
+                <div class="text-center">
+                  <i class="fas fa-file-pdf"></i>
+                  <h6 class="mt-2">PDF文档</h6>
+                  <p class="text-muted small mb-0">高质量打印格式</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="export-option" data-format="html">
+                <div class="text-center">
+                  <i class="fas fa-file-code"></i>
+                  <h6 class="mt-2">HTML网页</h6>
+                  <p class="text-muted small mb-0">可交互网页格式</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label class="form-label">报告标题</label>
+            <input type="text" class="form-control" id="reportTitle" value="抄袭检测分析报告">
+          </div>
+          
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="includeCharts" checked>
+            <label class="form-check-label" for="includeCharts">
+              包含图表
+            </label>
+          </div>
+          
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="includeSource" checked>
+            <label class="form-check-label" for="includeSource">
+              包含源代码片段
+            </label>
+          </div>
+          
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="includeWatermark" checked>
+            <label class="form-check-label" for="includeWatermark">
+              添加平台水印
+            </label>
+          </div>
+          
+          <div class="export-progress mt-4 d-none" id="exportProgress">
+            <div class="export-progress-bar" id="exportProgressBar"></div>
+            <div class="text-center mt-2 small" id="exportProgressText">准备导出...</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="startExportBtn">
+            <i class="fas fa-download me-2"></i>开始导出
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 分析结果内容区域 -->
   <div class="main-content">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>抄袭检测结果</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>抄袭检测结果</h2>
+      <div>
+        <button class="btn btn-outline-primary me-2" id="exportReportBtn">
+          <i class="fas fa-download me-1"></i> 导出报告
+        </button>
+        <button class="btn btn-primary">
+          <i class="fas fa-share-alt me-1"></i> 分享
+        </button>
+        <span id="configStatus" class="config-status config-missing">
+          <i class="fas fa-exclamation-circle config-status-icon"></i> API未配置
+        </span>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- 文件上传区域 -->
+      <div class="col-md-4">
+        <div class="upload-card">
+          <div class="card shadow">
+            <div class="card-header">
+              <h6 class="m-0 font-weight-bold text-primary">文件管理</h6>
+            </div>
+            <div class="card-body">
+              <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt fa-2x text-gray-400 mb-3"></i>
+                <h5 class="font-weight-bold text-gray-700">拖放文件或点击上传</h5>
+                <p class="text-sm text-gray-500">支持 EXE/DLL 格式，最多2个文件</p>
+              </div>
+              <input type="file" id="fileInput" multiple accept=".exe,.dll" class="visually-hidden" onchange="handleFiles(this)">
+              <div class="button-group">
+                <button class="custom-button danger" onclick="clearAllFiles()">
+                  <i class="fas fa-trash mr-2"></i>清空
+                </button>
+                <button class="custom-button success" onclick="startAnalysis()" id="analyzeBtn">
+                  <i class="fas fa-rocket mr-2"></i>开始分析
+                </button>
+              </div>
+              <div id="file-list" class="file-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 相似度分析和AI分析摘要区域 -->
+      <div class="col-md-8">
+        <!-- 相似度分析结果 -->
+        <div class="card shadow">
+          <div class="collapse-header" onclick="toggleCollapse('similarity-results-container')">
+            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> 相似度分析</h5>
+            <i class="collapse-icon fas fa-chevron-down"></i>
+          </div>
+          <div id="similarity-results-container" class="collapse-content">
+            <div class="card-body">
+              <div id="similarity-results" class="analysis-results">
+                <div class="text-center text-muted py-4">
+                  等待分析数据...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI分析摘要 -->
+        <div class="card shadow mt-4">
+          <div class="collapse-header" onclick="toggleCollapse('ai-report-container')">
+            <h5 class="mb-0"><i class="fas fa-robot me-2"></i> AI分析摘要</h5>
+            <i class="collapse-icon fas fa-chevron-down"></i>
+          </div>
+          <div id="ai-report-container" class="collapse-content">
+            <div class="card-body">
+              <div id="ai-report-content">请先完成文件上传并启动分析</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详细相似度分析图表 -->
+        <div class="card shadow mt-4">
+          <div class="collapse-header" onclick="toggleCollapse('detailed-similarity-container')">
+            <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i> 详细相似度分析</h5>
+            <i class="collapse-icon fas fa-chevron-down"></i>
+          </div>
+          <div id="detailed-similarity-container" class="collapse-content">
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="similarityChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 报告预览（隐藏） -->
+  <div id="reportPreview" class="d-none">
+    <div class="report-preview">
+      <div class="watermark">二进制分析平台</div>
+      <div class="report-header">
+        <div class="report-logo">
+          <i class="fas fa-bug"></i>
+        </div>
+        <h1 class="report-title" id="previewTitle">抄袭检测分析报告</h1>
+        <div class="report-subtitle" id="previewDate">报告生成日期: 2025年8月13日</div>
+      </div>
+      
+      <div class="report-section">
+        <h2 class="report-section-title">分析概述</h2>
+        <div class="d-flex justify-content-between mb-4">
+          <div class="text-center">
+            <div class="fs-5 text-primary">综合相似度</div>
+            <div class="display-4 fw-bold" id="previewSimilarity">0%</div>
+          </div>
           <div>
-              <button class="btn btn-outline-primary me-2"><i class="fas fa-download me-1"></i> 导出报告</button>
-              <button class="btn btn-primary"><i class="fas fa-share-alt me-1"></i> 分享</button>
-              <span id="configStatus" class="config-status config-missing">
-                  <i class="fas fa-exclamation-circle config-status-icon"></i> API未配置
-              </span>
+            <div class="mb-2"><strong>文件1:</strong> <span id="previewFile1">未选择</span></div>
+            <div><strong>文件2:</strong> <span id="previewFile2">未选择</span></div>
           </div>
+        </div>
       </div>
-
-      <div class="row">
-          <!-- 文件上传区域 -->
-          <div class="col-md-4">
-              <div class="upload-card">
-                  <div class="card shadow">
-                      <div class="card-header">
-                          <h6 class="m-0 font-weight-bold text-primary">文件管理</h6>
-                      </div>
-                      <div class="card-body">
-                          <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-                              <i class="fas fa-cloud-upload-alt fa-2x text-gray-400 mb-3"></i>
-                              <h5 class="font-weight-bold text-gray-700">拖放文件或点击上传</h5>
-                              <p class="text-sm text-gray-500">支持 EXE/DLL 格式，最多2个文件</p>
-                          </div>
-                          <input type="file" id="fileInput" multiple accept=".exe,.dll" class="visually-hidden" onchange="handleFiles(this)">
-                          <div class="button-group">
-                              <button class="custom-button danger" onclick="clearAllFiles()">
-                                  <i class="fas fa-trash mr-2"></i>清空
-                              </button>
-                              <button class="custom-button success" onclick="startAnalysis()" id="analyzeBtn">
-                                  <i class="fas fa-rocket mr-2"></i>开始分析
-                              </button>
-                          </div>
-                          <div id="file-list" class="file-list"></div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <!-- 相似度分析和AI分析摘要区域 -->
+      
+      <div class="report-section">
+        <h2 class="report-section-title">详细相似度分析</h2>
+        <div class="row mb-4">
           <div class="col-md-8">
-              <!-- 相似度分析结果 -->
-              <div class="card shadow">
-                  <div class="collapse-header" onclick="toggleCollapse('similarity-results-container')">
-                      <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> 相似度分析</h5>
-                      <i class="collapse-icon fas fa-chevron-down"></i>
-                  </div>
-                  <div id="similarity-results-container" class="collapse-content">
-                      <div class="card-body">
-                          <div id="similarity-results" class="analysis-results">
-                              <div class="text-center text-muted py-4">
-                                  等待分析数据...
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- AI分析摘要 -->
-              <div class="card shadow mt-4">
-                  <div class="collapse-header" onclick="toggleCollapse('ai-report-container')">
-                      <h5 class="mb-0"><i class="fas fa-robot me-2"></i> AI分析摘要</h5>
-                      <i class="collapse-icon fas fa-chevron-down"></i>
-                  </div>
-                  <div id="ai-report-container" class="collapse-content">
-                      <div class="card-body">
-                          <pre id="ai-report-content" class="p-3 bg-white rounded-lg">请先完成文件上传并启动分析</pre>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- 详细相似度分析图表 -->
-              <div class="card shadow mt-4">
-                  <div class="collapse-header" onclick="toggleCollapse('detailed-similarity-container')">
-                      <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i> 详细相似度分析</h5>
-                      <i class="collapse-icon fas fa-chevron-down"></i>
-                  </div>
-                  <div id="detailed-similarity-container" class="collapse-content">
-                      <div class="card-body">
-                          <div class="chart-container">
-                              <canvas id="similarityChart"></canvas>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+            <canvas id="previewChart" height="250"></canvas>
           </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span>语义相似度:</span>
+                <span class="fw-bold" id="previewSemantic">0%</span>
+              </div>
+              <div class="progress mt-1" style="height: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar" id="progressSemantic" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span>句法相似度:</span>
+                <span class="fw-bold" id="previewSyntactic">0%</span>
+              </div>
+              <div class="progress mt-1" style="height: 10px;">
+                <div class="progress-bar bg-info" role="progressbar" id="progressSyntactic" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="d-flex justify-content-between">
+                <span>词汇相似度:</span>
+                <span class="fw-bold" id="previewLexical">0%</span>
+              </div>
+              <div class="progress mt-1" style="height: 10px;">
+                <div class="progress-bar bg-success" role="progressbar" id="progressLexical" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      <div class="report-section">
+        <h2 class="report-section-title">AI分析摘要</h2>
+        <div id="previewAnalysis"></div>
+      </div>
+      
+      <div class="report-section">
+        <h2 class="report-section-title">结论与建议</h2>
+        <div id="previewConclusion">
+          <p>基于以上分析，两文件在代码结构和实现逻辑上存在显著相似性，建议进一步审查是否存在代码抄袭行为。</p>
+          <p class="fw-bold text-danger">安全建议：</p>
+          <ul>
+            <li>对相似代码段进行详细审查，确认是否存在知识产权问题</li>
+            <li>优化代码结构，减少不必要的重复</li>
+            <li>加强代码审计流程，预防未来可能出现的抄袭问题</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="report-footer">
+        <p>本报告由二进制分析平台生成 | 报告编号: <span id="previewId">REP-20250813-001</span></p>
+        <p class="small text-muted">报告仅供参考，最终结论需人工确认</p>
+      </div>
+    </div>
   </div>
 
   <!-- Bootstrap Bundle with Popper -->
@@ -1334,81 +1703,90 @@
       
       // 检查API配置状态
       checkApiConfigStatus();
+      
+      // 初始化导出选项
+      initExportOptions();
+      
+      // 绑定导出按钮事件
+      document.getElementById('exportReportBtn').addEventListener('click', function() {
+        const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+        exportModal.show();
+      });
     });
 
     // 初始化折叠状态
     document.addEventListener('DOMContentLoaded', function() {
-        toggleCollapse('similarity-results-container', false);
-        toggleCollapse('ai-report-container', false);
-        toggleCollapse('detailed-similarity-container', false);
+      toggleCollapse('similarity-results-container', false);
+      toggleCollapse('ai-report-container', false);
+      toggleCollapse('detailed-similarity-container', false);
     });
 
     // 折叠/展开功能
     function toggleCollapse(id, toggle = true) {
-        const container = document.getElementById(id);
-        const icon = container.previousElementSibling.querySelector('.collapse-icon');
+      const container = document.getElementById(id);
+      const icon = container.previousElementSibling.querySelector('.collapse-icon');
 
-        if (toggle) {
-            if (container.style.maxHeight) {
-                container.style.maxHeight = null;
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                container.style.maxHeight = container.scrollHeight + 'px';
-                icon.style.transform = 'rotate(180deg)';
-            }
+      if (toggle) {
+        if (container.style.maxHeight) {
+          container.style.maxHeight = null;
+          icon.style.transform = 'rotate(0deg)';
         } else {
-            container.style.maxHeight = null;
-            icon.style.transform = 'rotate(0deg)';
+          container.style.maxHeight = container.scrollHeight + 'px';
+          icon.style.transform = 'rotate(180deg)';
         }
+      } else {
+        container.style.maxHeight = null;
+        icon.style.transform = 'rotate(0deg)';
+      }
     }
 
     // 文件上传功能
     let selectedFiles = [];
 
     function handleFiles(input) {
-        const MAX_FILES = 2;
-        const validTypes = ['.exe', '.dll'];
+      const MAX_FILES = 2;
+      const validTypes = ['.exe', '.dll'];
 
-        if (input.files.length + selectedFiles.length > MAX_FILES) {
-            alert(`最多选择 ${MAX_FILES} 个文件`);
-            input.value = '';
-            return;
-        }
+      if (input.files.length + selectedFiles.length > MAX_FILES) {
+        alert(`最多选择 ${MAX_FILES} 个文件`);
+        input.value = '';
+        return;
+      }
 
-        const files = Array.from(input.files).filter(file =>
-            validTypes.some(ext => file.name.toLowerCase().endsWith(ext))
-        );
+      const files = Array.from(input.files).filter(file =>
+        validTypes.some(ext => file.name.toLowerCase().endsWith(ext))
+      );
 
-        if (files.length !== input.files.length) {
-            alert('请上传有效的EXE或DLL文件');
-        }
+      if (files.length !== input.files.length) {
+        alert('请上传有效的EXE或DLL文件');
+      }
 
-        selectedFiles = [...selectedFiles, ...files];
-        renderFileList();
+      selectedFiles = [...selectedFiles, ...files];
+      renderFileList();
     }
 
     function renderFileList() {
-        const container = document.getElementById('file-list');
-        container.innerHTML = selectedFiles.map((file, index) => `
-            <div class="file-item">
-                <span>${file.name}</span>
-                <div class="file-actions">
-                    <span class="text-muted">${(file.size / 1024).toFixed(1)}KB</span>
-                    <button onclick="removeFile(${index})">×</button>
-                </div>
-            </div>
-        `).join('');
+      const container = document.getElementById('file-list');
+      container.innerHTML = selectedFiles.map((file, index) => `
+        <div class="file-item">
+          <span>${file.name}</span>
+          <div class="file-actions">
+            <span class="text-muted">${(file.size / 1024).toFixed(1)}KB</span>
+            <button onclick="removeFile(${index})">×</button>
+          </div>
+        </div>
+      `).join('');
     }
 
     function removeFile(index) {
-        selectedFiles.splice(index, 1);
-        renderFileList();
+      selectedFiles.splice(index, 1);
+      renderFileList();
     }
 
     function clearAllFiles() {
-        selectedFiles = [];
-        renderFileList();
-        document.getElementById('fileInput').value = '';
+      selectedFiles = [];
+      renderFileList();
+      document.getElementById('fileInput').value = '';
     }
 
     // 相似度图表实例
@@ -1416,177 +1794,466 @@
 
     // 检查API配置状态
     function checkApiConfigStatus() {
-        const apiKey = localStorage.getItem('modelApiKey');
-        const modelType = localStorage.getItem('modelType');
-        const configStatus = document.getElementById('configStatus');
-        
-        if (apiKey && modelType) {
-            configStatus.className = 'config-status config-ok';
-            configStatus.innerHTML = '<i class="fas fa-check-circle config-status-icon"></i> API已配置';
-        } else {
-            configStatus.className = 'config-status config-missing';
-            configStatus.innerHTML = '<i class="fas fa-exclamation-circle config-status-icon"></i> API未配置';
-        }
+      const apiKey = localStorage.getItem('modelApiKey');
+      const modelType = localStorage.getItem('modelType');
+      const configStatus = document.getElementById('configStatus');
+      
+      if (apiKey && modelType) {
+        configStatus.className = 'config-status config-ok';
+        configStatus.innerHTML = '<i class="fas fa-check-circle config-status-icon"></i> API已配置';
+      } else {
+        configStatus.className = 'config-status config-missing';
+        configStatus.innerHTML = '<i class="fas fa-exclamation-circle config-status-icon"></i> API未配置';
+      }
     }
 
     // 真实的API调用函数
     async function startAnalysis() {
-        if (selectedFiles.length < 2) {
-            alert('请至少选择两个文件');
-            return;
+      if (selectedFiles.length < 2) {
+        alert('请至少选择两个文件');
+        return;
+      }
+
+      const btn = document.getElementById('analyzeBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+
+      try {
+        const apiKey = localStorage.getItem('modelApiKey');
+        const modelType = localStorage.getItem('modelType');
+
+        if (!apiKey || !modelType) {
+          alert('请先在设置页面保存 API 密钥和模型类型');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
+          return;
         }
 
-        const btn = document.getElementById('analyzeBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>分析中...';
+        // 显示加载层
+        document.getElementById('loadingOverlay').style.display = 'flex';
 
-        try {
-            const apiKey = localStorage.getItem('modelApiKey');
-            const modelType = localStorage.getItem('modelType');
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          formData.append('files', file);
+        });
 
-            if (!apiKey || !modelType) {
-                alert('请先在设置页面保存 API 密钥和模型类型');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
-                return;
-            }
+        const headers = {
+          'Authorization': `Bearer ${apiKey}`,
+          'Model-Type': modelType
+        };
 
-            // 显示加载层
-            document.getElementById('loadingOverlay').style.display = 'flex';
+        const response = await fetch('http://127.0.0.1:5000/upload', {
+          method: 'POST',
+          body: formData,
+          headers: headers
+        });
 
-            const formData = new FormData();
-            selectedFiles.forEach((file) => {
-                formData.append('files', file);
-            });
+        // 隐藏加载层
+        document.getElementById('loadingOverlay').style.display = 'none';
 
-            const headers = {
-                'Authorization': `Bearer ${apiKey}`,
-                'Model-Type': modelType
-            };
-
-            const response = await fetch('http://127.0.0.1:5000/upload', {
-                method: 'POST',
-                body: formData,
-                headers: headers
-            });
-
-            // 隐藏加载层
-            document.getElementById('loadingOverlay').style.display = 'none';
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || '网络响应不正常');
-            }
-
-            const result = await response.json();
-
-            // 根据后端返回的综合相似度更新页面
-            const combinedSimilarity = result.combined_similarity * 100;
-            const analysisResult = result.analysis_result;
-
-            document.getElementById('similarity-results').innerHTML = `
-                <div class="analysis-progress">
-                    <div class="progress-value" id="similarity-value">${combinedSimilarity.toFixed(2)}%</div>
-                    <div class="progress mb-4">
-                        <div class="progress-bar" role="progressbar" style="width: ${combinedSimilarity}%"
-                             aria-valuenow="${combinedSimilarity}" aria-valuemin="0" aria-valuemax="100">
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('ai-report-content').textContent = analysisResult;
-
-            // 自动展开结果面板
-            toggleCollapse('similarity-results-container', true);
-            toggleCollapse('ai-report-container', true);
-
-            // 更新详细相似度图表
-            initOrUpdateSimilarityChart({
-                semantic_similarity: result.semantic_similarity * 100,
-                syntactic_similarity: result.syntactic_similarity * 100,
-                lexical_similarity: result.lexical_similarity * 100
-            });
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
-        } catch (error) {
-            // 隐藏加载层
-            document.getElementById('loadingOverlay').style.display = 'none';
-            
-            alert(`分析出错: ${error.message}`);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '网络响应不正常');
         }
+
+        const result = await response.json();
+
+        // 根据后端返回的综合相似度更新页面
+        const combinedSimilarity = result.combined_similarity * 100;
+        const analysisResult = result.analysis_result;
+
+        document.getElementById('similarity-results').innerHTML = `
+          <div class="analysis-progress">
+            <div class="progress-value" id="similarity-value">${combinedSimilarity.toFixed(2)}%</div>
+            <div class="progress mb-4">
+              <div class="progress-bar" role="progressbar" style="width: ${combinedSimilarity}%"
+                   aria-valuenow="${combinedSimilarity}" aria-valuemin="0" aria-valuemax="100">
+              </div>
+            </div>
+          </div>
+        `;
+
+        // 使用Markdown渲染AI分析摘要
+        renderMarkdownContent(analysisResult);
+
+        // 自动展开结果面板
+        toggleCollapse('similarity-results-container', true);
+        toggleCollapse('ai-report-container', true);
+
+        // 更新详细相似度图表
+        initOrUpdateSimilarityChart({
+          semantic_similarity: result.semantic_similarity * 100,
+          syntactic_similarity: result.syntactic_similarity * 100,
+          lexical_similarity: result.lexical_similarity * 100
+        });
+
+        // 保存分析结果用于导出
+        saveAnalysisResult({
+          combined: combinedSimilarity,
+          semantic: result.semantic_similarity * 100,
+          syntactic: result.syntactic_similarity * 100,
+          lexical: result.lexical_similarity * 100,
+          analysis: analysisResult,
+          files: selectedFiles.map(f => f.name)
+        });
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
+      } catch (error) {
+        // 隐藏加载层
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        alert(`分析出错: ${error.message}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始分析';
+      }
+    }
+    
+    // 渲染Markdown内容
+    function renderMarkdownContent(content) {
+      // 使用marked解析Markdown
+      const htmlContent = marked.parse(content);
+      
+      // 更新DOM
+      const container = document.getElementById('ai-report-content');
+      container.innerHTML = htmlContent;
+      
+      // 高亮代码块
+      document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
     }
 
     // 初始化或更新相似度图表
     function initOrUpdateSimilarityChart(details) {
-        const ctx = document.getElementById('similarityChart').getContext('2d');
+      const ctx = document.getElementById('similarityChart').getContext('2d');
 
-        // 如果图表已存在，则销毁它
-        if (similarityChart) {
-            similarityChart.destroy();
-        }
+      // 如果图表已存在，则销毁它
+      if (similarityChart) {
+        similarityChart.destroy();
+      }
 
-        // 创建雷达图
-        similarityChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['语义相似度', '句法相似度', '词汇相似度'],
-                datasets: [{
-                    label: '相似度百分比',
-                    data: [
-                        details.semantic_similarity,
-                        details.syntactic_similarity,
-                        details.lexical_similarity
-                    ],
-                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(13, 110, 253, 1)',
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 20,
-                            backdropColor: 'transparent'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        angleLines: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        },
-                        pointLabels: {
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.raw.toFixed(2)}%`;
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 2000
+      // 创建雷达图
+      similarityChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['语义相似度', '句法相似度', '词汇相似度'],
+          datasets: [{
+            label: '相似度百分比',
+            data: [
+              details.semantic_similarity,
+              details.syntactic_similarity,
+              details.lexical_similarity
+            ],
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                stepSize: 20,
+                backdropColor: 'transparent'
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              },
+              angleLines: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              },
+              pointLabels: {
+                font: {
+                  size: 12
                 }
+              }
             }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.label}: ${context.raw.toFixed(2)}%`;
+                }
+              }
+            }
+          },
+          animation: {
+            duration: 2000
+          }
+        }
+      });
+    }
+
+    // 保存分析结果
+    let analysisResult = null;
+    
+    function saveAnalysisResult(result) {
+      analysisResult = result;
+    }
+    
+    // 初始化导出选项
+    function initExportOptions() {
+      const exportOptions = document.querySelectorAll('.export-option');
+      exportOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          // 移除所有active类
+          exportOptions.forEach(opt => opt.classList.remove('active'));
+          // 添加active类到当前选项
+          this.classList.add('active');
         });
+      });
+      
+      // 绑定导出按钮
+      document.getElementById('startExportBtn').addEventListener('click', startExport);
+    }
+    
+    // 开始导出
+    function startExport() {
+      if (!analysisResult) {
+        alert('请先完成分析');
+        return;
+      }
+      
+      const exportProgress = document.getElementById('exportProgress');
+      const exportProgressBar = document.getElementById('exportProgressBar');
+      const exportProgressText = document.getElementById('exportProgressText');
+      const startExportBtn = document.getElementById('startExportBtn');
+      
+      // 显示进度条
+      exportProgress.classList.remove('d-none');
+      startExportBtn.disabled = true;
+      
+      // 获取导出选项
+      const exportFormat = document.querySelector('.export-option.active').dataset.format;
+      const reportTitle = document.getElementById('reportTitle').value;
+      const includeCharts = document.getElementById('includeCharts').checked;
+      const includeWatermark = document.getElementById('includeWatermark').checked;
+      
+      // 更新进度
+      exportProgressBar.style.width = '20%';
+      exportProgressText.textContent = '准备报告内容...';
+      
+      // 准备报告预览
+      prepareReportPreview(reportTitle, includeWatermark);
+      
+      // 模拟处理过程
+      setTimeout(() => {
+        exportProgressBar.style.width = '50%';
+        exportProgressText.textContent = '生成图表...';
+        
+        setTimeout(() => {
+          exportProgressBar.style.width = '80%';
+          exportProgressText.textContent = '正在导出...';
+          
+          setTimeout(() => {
+            exportProgressBar.style.width = '100%';
+            exportProgressText.textContent = '导出完成！';
+            
+            // 实际导出
+            exportReport(exportFormat, reportTitle);
+            
+            // 重置按钮
+            setTimeout(() => {
+              startExportBtn.disabled = false;
+              bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+            }, 1000);
+          }, 800);
+        }, 800);
+      }, 800);
+    }
+    
+    // 准备报告预览
+    function prepareReportPreview(title, includeWatermark) {
+      // 设置标题
+      document.getElementById('previewTitle').textContent = title;
+      document.getElementById('previewDate').textContent = `报告生成日期: ${new Date().toLocaleDateString('zh-CN', {year: 'numeric', month: 'long', day: 'numeric'})}`;
+      
+      // 设置相似度
+      document.getElementById('previewSimilarity').textContent = analysisResult.combined.toFixed(2) + '%';
+      document.getElementById('previewSemantic').textContent = analysisResult.semantic.toFixed(2) + '%';
+      document.getElementById('previewSyntactic').textContent = analysisResult.syntactic.toFixed(2) + '%';
+      document.getElementById('previewLexical').textContent = analysisResult.lexical.toFixed(2) + '%';
+      
+      // 更新进度条
+      document.getElementById('progressSemantic').style.width = analysisResult.semantic + '%';
+      document.getElementById('progressSyntactic').style.width = analysisResult.syntactic + '%';
+      document.getElementById('progressLexical').style.width = analysisResult.lexical + '%';
+      
+      // 设置文件名
+      document.getElementById('previewFile1').textContent = analysisResult.files[0] || '未选择';
+      document.getElementById('previewFile2').textContent = analysisResult.files[1] || '未选择';
+      
+      // 设置AI分析摘要
+      document.getElementById('previewAnalysis').innerHTML = marked.parse(analysisResult.analysis);
+      
+      // 设置水印
+      document.querySelector('.watermark').style.display = includeWatermark ? 'block' : 'none';
+      
+      // 生成随机报告ID
+      document.getElementById('previewId').textContent = 'REP-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+      
+      // 创建预览图表
+      const ctx = document.getElementById('previewChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['语义相似度', '句法相似度', '词汇相似度'],
+          datasets: [{
+            label: '相似度百分比',
+            data: [
+              analysisResult.semantic,
+              analysisResult.syntactic,
+              analysisResult.lexical
+            ],
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                stepSize: 20,
+                backdropColor: 'transparent'
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              },
+              angleLines: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    // 导出报告
+    function exportReport(format, title) {
+      if (format === 'pdf') {
+        exportToPDF(title);
+      } else {
+        // 导出HTML格式
+        alert('HTML导出功能正在开发中');
+      }
+    }
+    
+    // 导出为PDF
+    function exportToPDF(title) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      
+      // 设置文档属性
+      doc.setProperties({
+        title: title,
+        subject: '抄袭检测分析报告',
+        author: '二进制分析平台',
+        creator: '二进制分析平台'
+      });
+      
+      // 添加标题
+      doc.setFontSize(22);
+      doc.setTextColor(30, 41, 59); // slate-800
+      doc.text(title, 105, 30, null, null, 'center');
+      
+      // 添加副标题
+      doc.setFontSize(12);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text(`报告生成日期: ${new Date().toLocaleDateString('zh-CN')}`, 105, 38, null, null, 'center');
+      
+      // 添加内容
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42); // slate-900
+      
+      // 添加相似度摘要
+      doc.setFontSize(16);
+      doc.text('分析概述', 20, 50);
+      doc.setLineWidth(0.5);
+      doc.line(20, 52, 50, 52);
+      
+      doc.setFontSize(12);
+      doc.text(`综合相似度: ${analysisResult.combined.toFixed(2)}%`, 20, 60);
+      doc.text(`文件1: ${analysisResult.files[0] || '未选择'}`, 20, 67);
+      doc.text(`文件2: ${analysisResult.files[1] || '未选择'}`, 20, 74);
+      
+      // 添加图表区域
+      doc.setFontSize(16);
+      doc.text('详细相似度分析', 20, 90);
+      doc.line(20, 92, 65, 92);
+      
+      // 添加图表描述
+      doc.setFontSize(12);
+      doc.text(`语义相似度: ${analysisResult.semantic.toFixed(2)}%`, 20, 100);
+      doc.text(`句法相似度: ${analysisResult.syntactic.toFixed(2)}%`, 20, 107);
+      doc.text(`词汇相似度: ${analysisResult.lexical.toFixed(2)}%`, 20, 114);
+      
+      // 添加分析摘要
+      doc.setFontSize(16);
+      doc.text('AI分析摘要', 20, 130);
+      doc.line(20, 132, 50, 132);
+      
+      // 添加分析内容
+      const analysisLines = doc.splitTextToSize(analysisResult.analysis, 170);
+      doc.setFontSize(11);
+      doc.text(analysisLines, 20, 140);
+      
+      // 添加页脚
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('本报告由二进制分析平台生成', 105, 280, null, null, 'center');
+      doc.text(`报告编号: REP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`, 105, 285, null, null, 'center');
+      
+      // 保存PDF
+      doc.save(`${title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      
+      // 显示导出成功提示
+      showNotification('报告导出成功！');
+    }
+    
+    // 显示通知函数
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.classList.add('fixed', 'top-4', 'right-4', 'px-6', 'py-4', 'rounded-lg', 'shadow-lg', 'z-50', 'animate-slide-in');
+      notification.style.background = type === 'error' ? '#fee2e2' : '#dbeafe';
+      notification.style.color = type === 'error' ? '#b91c1c' : '#1d4ed8';
+      notification.style.borderLeft = `4px solid ${type === 'error' ? '#ef4444' : '#3b82f6'}`;
+      
+      notification.innerHTML = `
+        <div class="d-flex align-items-center">
+          <i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-2"></i>
+          <strong>${type === 'error' ? '错误' : '成功'}:</strong> ${message}
+        </div>
+        <button class="btn-close position-absolute top-0 end-0 m-2" onclick="this.parentElement.remove()"></button>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 自动消失
+      setTimeout(() => {
+        notification.classList.add('animate-slide-out');
+        setTimeout(() => {
+          notification.remove();
+        }, 300);
+      }, 3000);
     }
 
     // 添加登录功能
@@ -1722,145 +2389,57 @@
       showNotification('您已成功注销');
     });
 
-    // 显示通知函数
-    function showNotification(message, type = 'info') {
-      const notification = document.createElement('div');
-      notification.classList.add('fixed', 'top-4', 'right-4', 'px-6', 'py-4', 'rounded-lg', 'shadow-lg', 'z-50', 'animate-slide-in');
+    // 初始化页面时渲染示例Markdown内容
+    document.addEventListener('DOMContentLoaded', function() {
+      const exampleMarkdown = `
+# 缓冲区溢出漏洞分析报告
 
-      if (type === 'error') {
-        notification.classList.add('bg-red-100', 'text-red-800');
-      } else {
-        notification.classList.add('bg-white', 'text-gray-800');
-      }
+## 漏洞概述
+在文件A和文件B中均发现了**缓冲区溢出漏洞**，这些漏洞可能导致恶意代码执行。
 
-      notification.textContent = message;
+## 相似度分析
+文件A和文件B在以下方面具有高度相似性：
 
-      const closeBtn = document.createElement('button');
-      closeBtn.innerHTML = '<i class="fa fa-times"></i>';
-      closeBtn.classList.add('absolute', 'top-2', 'right-2', 'text-gray-500', 'hover:text-gray-700');
-      closeBtn.addEventListener('click', () => {
-        notification.remove();
+* **代码结构相似度**: 92%
+* **函数调用模式相似度**: 87%
+* **漏洞模式相似度**: 95%
+
+## 漏洞详情
+
+### 1. 文件A中的漏洞位置
+\`\`\`c
+void vulnerableFunction(char *input) {
+    char buffer[64];
+    strcpy(buffer, input);  // 存在缓冲区溢出风险
+}
+\`\`\`
+
+### 2. 文件B中的漏洞位置
+\`\`\`c
+void unsafeCopy(char *userInput) {
+    char localBuffer[64];
+    memcpy(localBuffer, userInput, strlen(userInput));  // 未检查长度
+}
+\`\`\`
+
+## 安全建议
+1. 使用安全的字符串处理函数（如 \`strncpy\`）
+2. 添加输入长度验证
+3. 启用编译器的栈保护机制（-fstack-protector）
+
+> **注意**: 这些漏洞都属于高危漏洞，建议立即修复！
+      `;
+      renderMarkdownContent(exampleMarkdown);
+      
+      // 保存示例分析结果
+      saveAnalysisResult({
+        combined: 85.3,
+        semantic: 92.1,
+        syntactic: 78.4,
+        lexical: 85.6,
+        analysis: exampleMarkdown,
+        files: ['app_v1.exe', 'app_v2.exe']
       });
-
-      notification.appendChild(closeBtn);
-      document.body.appendChild(notification);
-
-      // 自动消失
-      setTimeout(() => {
-        notification.classList.add('animate-slide-out');
-        setTimeout(() => {
-          notification.remove();
-        }, 300);
-      }, 3000);
-    }
-
-    // 搜索功能
-    const searchInput = document.getElementById('searchInput');
-    const searchSuggestions = document.getElementById('searchSuggestions');
-    const searchHint = document.getElementById('searchHint');
-
-    // 搜索关键词与页面的映射
-    const searchMappings = {
-      '抄袭检测': 'analysis-results.html',
-      '抄袭分析': 'analysis-results.html',
-      '抄袭': 'analysis-results.html',
-      '同源分析': 'analysis-results.html',
-      '重复代码': 'analysis-results.html',
-      '漏洞检测': 'vulnerable-detection.html',
-      '漏洞扫描': 'vulnerable-detection.html',
-      '安全扫描': 'vulnerable-detection.html',
-      '漏洞查找': 'vulnerable-detection.html',
-      '漏洞专家问答': 'knowledge.html',
-      '专家问答': 'knowledge.html',
-      '漏洞知识库': 'knowledge.html',
-      '问答': 'knowledge.html',
-      '系统设置': 'settings.html',
-      '设置': 'settings.html',
-      '配置': 'settings.html',
-      '安全设置': 'settings.html'
-    };
-
-    // 输入事件监听
-    searchInput.addEventListener('input', function() {
-      const query = this.value.trim().toLowerCase();
-
-      if (query.length > 0) {
-        searchHint.classList.add('show');
-        searchSuggestions.classList.add('show');
-      } else {
-        searchHint.classList.remove('show');
-        searchSuggestions.classList.remove('show');
-      }
-    });
-
-    // 回车搜索事件
-    searchInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        performSearch(this.value);
-      }
-    });
-
-    // 失去焦点隐藏建议
-    searchInput.addEventListener('blur', function() {
-      // 延迟隐藏以允许点击建议项
-      setTimeout(() => {
-        searchSuggestions.classList.remove('show');
-        searchHint.classList.remove('show');
-      }, 200);
-    });
-
-    // 点击搜索建议项
-    const suggestionItems = document.querySelectorAll('.suggestion-item');
-    suggestionItems.forEach(item => {
-      item.addEventListener('mousedown', function() {
-        const keyword = this.getAttribute('data-keyword');
-        searchInput.value = keyword;
-        performSearch(keyword);
-      });
-    });
-
-    // 执行搜索逻辑
-    function performSearch(query) {
-      const keyword = query.trim();
-      const targetPage = findMatchingPage(keyword);
-
-      if (targetPage) {
-        // 可以在这里添加搜索日志或分析
-        console.log(`检测到关键词: "${keyword}", 跳转到: ${targetPage}`);
-        window.location.href = targetPage;
-      } else {
-        // 没有匹配的关键词，显示提示
-        showNotification(`未找到与"${keyword}"匹配的功能，尝试其他关键词`, 'error');
-      }
-    }
-
-    // 查找匹配的页面
-    function findMatchingPage(query) {
-      const normalizedQuery = query.toLowerCase();
-
-      // 查找完全匹配的关键词
-      if (searchMappings[normalizedQuery]) {
-        return searchMappings[normalizedQuery];
-      }
-
-      // 查找部分匹配的关键词
-      for (const keyword in searchMappings) {
-        if (normalizedQuery.includes(keyword.toLowerCase())) {
-          return searchMappings[keyword];
-        }
-      }
-
-      return null;
-    }
-    
-    // 原有功能 - 导出功能
-    document.querySelector('.btn-outline-primary').addEventListener('click', function() {
-        alert('导出功能将在实际实现中完成');
-    });
-
-    // 原有功能 - 分享功能
-    document.querySelector('.btn-primary').addEventListener('click', function() {
-        alert('分享功能将在实际实现中完成');
     });
   </script>
 </body>
